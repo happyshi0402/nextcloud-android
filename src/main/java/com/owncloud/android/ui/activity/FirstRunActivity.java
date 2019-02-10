@@ -27,7 +27,6 @@ import android.accounts.AccountManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.res.Configuration;
-import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
 import android.view.View;
@@ -37,11 +36,11 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import com.nextcloud.client.preferences.AppPreferences;
+import com.nextcloud.client.preferences.PreferenceManager;
 import com.owncloud.android.MainApp;
 import com.owncloud.android.R;
 import com.owncloud.android.authentication.AccountUtils;
 import com.owncloud.android.authentication.AuthenticatorActivity;
-import com.nextcloud.client.preferences.PreferenceManager;
 import com.owncloud.android.features.FeatureItem;
 import com.owncloud.android.ui.adapter.FeaturesViewAdapter;
 import com.owncloud.android.ui.whatsnew.ProgressIndicator;
@@ -72,8 +71,8 @@ public class FirstRunActivity extends BaseActivity implements ViewPager.OnPageCh
         setSlideshowSize(getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE);
 
         Button loginButton = findViewById(R.id.login);
-        loginButton.setBackgroundColor(Color.WHITE);
-        loginButton.setTextColor(Color.BLACK);
+        loginButton.setBackgroundColor(getResources().getColor(R.color.bg_default));
+        loginButton.setTextColor(getResources().getColor(R.color.fg_default));
 
         loginButton.setOnClickListener(v -> {
             if (getIntent().getBooleanExtra(EXTRA_ALLOW_CLOSE, false)) {
@@ -86,7 +85,7 @@ public class FirstRunActivity extends BaseActivity implements ViewPager.OnPageCh
         });
 
         Button providerButton = findViewById(R.id.signup);
-        providerButton.setBackgroundColor(getResources().getColor(R.color.primary_dark));
+        providerButton.setBackgroundColor(getResources().getColor(R.color.primary));
         providerButton.setTextColor(getResources().getColor(R.color.login_text_color));
         providerButton.setVisibility(isProviderOrOwnInstallationVisible ? View.VISIBLE : View.GONE);
         providerButton.setOnClickListener(v -> {
