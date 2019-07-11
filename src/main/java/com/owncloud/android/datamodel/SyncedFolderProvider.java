@@ -28,7 +28,7 @@ import android.database.Cursor;
 import android.net.Uri;
 
 import com.nextcloud.client.preferences.AppPreferences;
-import com.nextcloud.client.preferences.PreferenceManager;
+import com.nextcloud.client.preferences.AppPreferencesImpl;
 import com.owncloud.android.db.ProviderMeta;
 import com.owncloud.android.lib.common.utils.Log_OC;
 
@@ -38,6 +38,8 @@ import java.util.List;
 import java.util.Observable;
 
 import androidx.annotation.NonNull;
+
+import static com.owncloud.android.datamodel.OCFile.PATH_SEPARATOR;
 
 /**
  * Database provider for handling the persistence aspects of {@link SyncedFolder}s.
@@ -251,7 +253,7 @@ public class SyncedFolderProvider extends Observable {
         for (SyncedFolder syncedFolder : syncedFolders) {
             if (!new File(syncedFolder.getLocalPath()).exists()) {
                 String localPath = syncedFolder.getLocalPath();
-                if (localPath.endsWith("/")) {
+                if (localPath.endsWith(PATH_SEPARATOR)) {
                     localPath = localPath.substring(0, localPath.lastIndexOf('/'));
                 }
                 localPath = localPath.substring(0, localPath.lastIndexOf('/'));
@@ -265,7 +267,7 @@ public class SyncedFolderProvider extends Observable {
         }
 
         if (context != null) {
-            AppPreferences preferences = PreferenceManager.fromContext(context);
+            AppPreferences preferences = AppPreferencesImpl.fromContext(context);
             preferences.setAutoUploadPathsUpdateEnabled(true);
         }
     }

@@ -33,10 +33,8 @@ import android.widget.TextView;
 
 import com.nextcloud.client.preferences.AppPreferences;
 import com.owncloud.android.R;
-import com.owncloud.android.authentication.AccountUtils;
 import com.owncloud.android.datamodel.FileDataStorageManager;
 import com.owncloud.android.datamodel.ThumbnailsCacheManager;
-import com.nextcloud.client.preferences.PreferenceManager;
 import com.owncloud.android.lib.common.utils.Log_OC;
 import com.owncloud.android.lib.resources.trashbin.model.TrashbinFile;
 import com.owncloud.android.ui.interfaces.TrashbinActivityInterface;
@@ -51,6 +49,9 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 import butterknife.BindView;
 import butterknife.ButterKnife;
+
+import static com.owncloud.android.datamodel.OCFile.PATH_SEPARATOR;
+import static com.owncloud.android.datamodel.OCFile.ROOT_PATH;
 
 /**
  * Adapter for the trashbin view
@@ -70,11 +71,16 @@ public class TrashbinListAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
 
     private final List<ThumbnailsCacheManager.ThumbnailGenerationTask> asyncTasks = new ArrayList<>();
 
-    public TrashbinListAdapter(TrashbinActivityInterface trashbinActivityInterface,
-                               FileDataStorageManager storageManager, AppPreferences preferences, Context context) {
+    public TrashbinListAdapter(
+        TrashbinActivityInterface trashbinActivityInterface,
+        FileDataStorageManager storageManager,
+        AppPreferences preferences,
+        Context context,
+        Account account
+    ) {
         this.files = new ArrayList<>();
         this.trashbinActivityInterface = trashbinActivityInterface;
-        this.account = AccountUtils.getCurrentOwnCloudAccount(context);
+        this.account = account;
         this.storageManager = storageManager;
         this.preferences = preferences;
         this.context = context;
@@ -130,9 +136,9 @@ public class TrashbinListAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
             String location;
             int lastIndex = file.getOriginalLocation().lastIndexOf('/');
             if (lastIndex != -1) {
-                location = "/" + file.getOriginalLocation().substring(0, lastIndex) + "/";
+                location = ROOT_PATH + file.getOriginalLocation().substring(0, lastIndex) + PATH_SEPARATOR;
             } else {
-                location = "/";
+                location = ROOT_PATH;
             }
             trashbinFileViewHolder.originalLocation.setText(location);
 

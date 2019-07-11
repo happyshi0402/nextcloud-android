@@ -2,7 +2,9 @@
  * Nextcloud application
  *
  * @author Mario Danic
+ * @author Chris Narkiewicz
  * Copyright (C) 2017-2018 Mario Danic <mario@lovelyhq.com>
+ * Copyright (C) 2019 Chris Narkiewicz <hello@ezaquarii.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -31,6 +33,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.graphics.BitmapFactory;
 import android.media.RingtoneManager;
+import android.os.Build;
+import android.service.notification.StatusBarNotification;
 import android.text.TextUtils;
 import android.util.Base64;
 import android.util.Log;
@@ -38,8 +42,8 @@ import android.util.Log;
 import com.evernote.android.job.Job;
 import com.evernote.android.job.util.support.PersistableBundleCompat;
 import com.google.gson.Gson;
+import com.nextcloud.client.account.UserAccountManager;
 import com.owncloud.android.R;
-import com.owncloud.android.authentication.AccountUtils;
 import com.owncloud.android.datamodel.DecryptedPushMessage;
 import com.owncloud.android.datamodel.SignatureVerification;
 import com.owncloud.android.lib.common.OwnCloudAccount;
@@ -52,6 +56,8 @@ import com.owncloud.android.lib.resources.notifications.DeleteNotificationRemote
 import com.owncloud.android.lib.resources.notifications.GetNotificationRemoteOperation;
 import com.owncloud.android.lib.resources.notifications.models.Action;
 import com.owncloud.android.lib.resources.notifications.models.Notification;
+import com.owncloud.android.lib.resources.notifications.models.RichObject;
+import com.owncloud.android.ui.activity.FileDisplayActivity;
 import com.owncloud.android.ui.activity.NotificationsActivity;
 import com.owncloud.android.ui.notifications.NotificationUtils;
 import com.owncloud.android.utils.PushUtils;
@@ -72,10 +78,12 @@ import java.security.SecureRandom;
 
 import javax.crypto.Cipher;
 import javax.crypto.NoSuchPaddingException;
+import javax.inject.Inject;
 
 import androidx.annotation.NonNull;
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
+import dagger.android.AndroidInjection;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 public class NotificationJob extends Job {
@@ -88,15 +96,20 @@ public class NotificationJob extends Job {
     private static final String KEY_NOTIFICATION_ACTION_TYPE = "KEY_NOTIFICATION_ACTION_TYPE";
     private static final String PUSH_NOTIFICATION_ID = "PUSH_NOTIFICATION_ID";
     private static final String NUMERIC_NOTIFICATION_ID = "NUMERIC_NOTIFICATION_ID";
-    public static final String APP_SPREED = "spreed";
 
-    private SecureRandom randomId = new SecureRandom();
     private Context context;
+    private UserAccountManager accountManager;
+
+    NotificationJob(final Context context, final UserAccountManager accountManager) {
+        this.context = context;
+        this.accountManager = accountManager;
+    }
 
     @NonNull
     @Override
     protected Result onRunJob(@NonNull Params params) {
         context = getContext();
+        NotificationManagerCompat notificationManager = NotificationManagerCompat.from(context);
         PersistableBundleCompat persistableBundleCompat = getParams().getExtras();
         String subject = persistableBundleCompat.getString(KEY_NOTIFICATION_SUBJECT, "");
         String signature = persistableBundleCompat.getString(KEY_NOTIFICATION_SIGNATURE, "");
@@ -109,6 +122,7 @@ public class NotificationJob extends Job {
 
                 try {
                     SignatureVerification signatureVerification = PushUtils.verifySignature(context,
+                                                                                            accountManager,
                                                                                             base64DecodedSignature,
                                                                                             base64DecodedSubject);
 
@@ -121,8 +135,11 @@ public class NotificationJob extends Job {
                         DecryptedPushMessage decryptedPushMessage = gson.fromJson(new String(decryptedSubject),
                                                                                   DecryptedPushMessage.class);
 
-                        // We ignore Spreed messages for now
-                        if (!APP_SPREED.equals(decryptedPushMessage.getApp())) {
+                        if (decryptedPushMessage.delete) {
+                            notificationManager.cancel(decryptedPushMessage.nid);
+                        } else if (decryptedPushMessage.deleteAll) {
+                            notificationManager.cancelAll();
+                        } else {
                             fetchCompleteNotification(signatureVerification.getAccount(), decryptedPushMessage);
                         }
                     }
@@ -138,9 +155,20 @@ public class NotificationJob extends Job {
     }
 
     private void sendNotification(Notification notification, Account account) {
-        Intent intent = new Intent(context, NotificationsActivity.class);
-        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+        SecureRandom randomId = new SecureRandom();
+        RichObject file = notification.subjectRichParameters.get("file");
+
+        Intent intent;
+        if (file == null) {
+            intent = new Intent(context, NotificationsActivity.class);
+        } else {
+            intent = new Intent(context, FileDisplayActivity.class);
+            intent.setAction(Intent.ACTION_VIEW);
+            intent.putExtra(FileDisplayActivity.KEY_FILE_ID, file.id);
+        }
         intent.putExtra(KEY_NOTIFICATION_ACCOUNT, account.name);
+        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+
         PendingIntent pendingIntent = PendingIntent.getActivity(context, 0, intent, PendingIntent.FLAG_ONE_SHOT);
         int pushNotificationId = randomId.nextInt();
 
@@ -210,11 +238,11 @@ public class NotificationJob extends Job {
                 .setContentIntent(pendingIntent).build());
 
         NotificationManagerCompat notificationManager = NotificationManagerCompat.from(context);
-        notificationManager.notify(pushNotificationId, notificationBuilder.build());
+        notificationManager.notify(notification.getNotificationId(), notificationBuilder.build());
     }
 
     private void fetchCompleteNotification(Account account, DecryptedPushMessage decryptedPushMessage) {
-        Account currentAccount = AccountUtils.getOwnCloudAccountByName(context, account.name);
+        Account currentAccount = accountManager.getAccountByName(account.name);
 
         if (currentAccount == null) {
             Log_OC.e(this, "Account may not be null");
@@ -225,7 +253,7 @@ public class NotificationJob extends Job {
             OwnCloudAccount ocAccount = new OwnCloudAccount(currentAccount, context);
             OwnCloudClient client = OwnCloudClientManagerFactory.getDefaultSingleton()
                 .getClientFor(ocAccount, context);
-            client.setOwnCloudVersion(AccountUtils.getServerVersion(currentAccount));
+            client.setOwnCloudVersion(accountManager.getServerVersion(currentAccount));
 
             RemoteOperationResult result = new GetNotificationRemoteOperation(decryptedPushMessage.nid)
                 .execute(client);
@@ -242,16 +270,33 @@ public class NotificationJob extends Job {
 
     public static class NotificationReceiver extends BroadcastReceiver {
 
+        @Inject UserAccountManager accountManager;
+
         @Override
         public void onReceive(Context context, Intent intent) {
+            AndroidInjection.inject(this, context);
             int numericNotificationId = intent.getIntExtra(NUMERIC_NOTIFICATION_ID, 0);
-            int pushNotificationId = intent.getIntExtra(PUSH_NOTIFICATION_ID, 0);
             String accountName = intent.getStringExtra(NotificationJob.KEY_NOTIFICATION_ACCOUNT);
 
             if (numericNotificationId != 0) {
                 new Thread(() -> {
+                    NotificationManager notificationManager = (NotificationManager) context.getSystemService(
+                        Activity.NOTIFICATION_SERVICE);
+
+                    android.app.Notification oldNotification = null;
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && notificationManager != null) {
+                        for (StatusBarNotification statusBarNotification : notificationManager.getActiveNotifications()) {
+                            if (numericNotificationId == statusBarNotification.getId()) {
+                                oldNotification = statusBarNotification.getNotification();
+                                break;
+                            }
+                        }
+
+                        cancel(context, numericNotificationId);
+                    }
+
                     try {
-                        Account currentAccount = AccountUtils.getOwnCloudAccountByName(context, accountName);
+                        Account currentAccount = accountManager.getAccountByName(accountName);
 
                         if (currentAccount == null) {
                             Log_OC.e(this, "Account may not be null");
@@ -261,21 +306,26 @@ public class NotificationJob extends Job {
                         OwnCloudAccount ocAccount = new OwnCloudAccount(currentAccount, context);
                         OwnCloudClient client = OwnCloudClientManagerFactory.getDefaultSingleton()
                             .getClientFor(ocAccount, context);
-                        client.setOwnCloudVersion(AccountUtils.getServerVersion(currentAccount));
+                        client.setOwnCloudVersion(accountManager.getServerVersion(currentAccount));
 
                         String actionType = intent.getStringExtra(KEY_NOTIFICATION_ACTION_TYPE);
                         String actionLink = intent.getStringExtra(KEY_NOTIFICATION_ACTION_LINK);
 
                         boolean success;
                         if (!TextUtils.isEmpty(actionType) && !TextUtils.isEmpty(actionLink)) {
-                            success = executeAction(actionType, actionLink, client) == HttpStatus.SC_OK;
+                            int resultCode = executeAction(actionType, actionLink, client);
+                            success = resultCode == HttpStatus.SC_OK || resultCode == HttpStatus.SC_ACCEPTED;
                         } else {
                             success = new DeleteNotificationRemoteOperation(numericNotificationId)
                                 .execute(client).isSuccess();
                         }
 
                         if (success) {
-                            cancel(context, pushNotificationId);
+                            if (oldNotification == null) {
+                                cancel(context, numericNotificationId);
+                            }
+                        } else if (notificationManager != null) {
+                            notificationManager.notify(numericNotificationId, oldNotification);
                         }
                     } catch (com.owncloud.android.lib.common.accounts.AccountUtils.AccountNotFoundException |
                         IOException | OperationCanceledException | AuthenticatorException e) {

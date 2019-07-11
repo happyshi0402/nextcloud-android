@@ -2,8 +2,10 @@
  * Nextcloud Android client application
  *
  * @author Mario Danic
+ * @author Chris Narkiewicz
  * Copyright (C) 2017 Mario Danic
  * Copyright (C) 2017 Nextcloud
+ * Copyright (C) 2919 Chris Narkiewicz
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU AFFERO GENERAL PUBLIC LICENSE
@@ -31,15 +33,18 @@ import android.text.TextUtils;
 
 import com.evernote.android.job.Job;
 import com.evernote.android.job.util.support.PersistableBundleCompat;
-import com.nextcloud.client.preferences.PreferenceManager;
+import com.nextcloud.client.account.UserAccountManager;
+import com.nextcloud.client.device.PowerManagementService;
+import com.nextcloud.client.network.ConnectivityService;
+import com.nextcloud.client.preferences.AppPreferences;
 import com.owncloud.android.MainApp;
 import com.owncloud.android.R;
-import com.owncloud.android.authentication.AccountUtils;
 import com.owncloud.android.datamodel.ArbitraryDataProvider;
 import com.owncloud.android.datamodel.FilesystemDataProvider;
 import com.owncloud.android.datamodel.MediaFolderType;
 import com.owncloud.android.datamodel.SyncedFolder;
 import com.owncloud.android.datamodel.SyncedFolderProvider;
+import com.owncloud.android.datamodel.UploadsStorageManager;
 import com.owncloud.android.files.services.FileUploader;
 import com.owncloud.android.lib.common.utils.Log_OC;
 import com.owncloud.android.operations.UploadFileOperation;
@@ -48,7 +53,6 @@ import com.owncloud.android.utils.FileStorageUtils;
 import com.owncloud.android.utils.FilesSyncHelper;
 import com.owncloud.android.utils.MimeType;
 import com.owncloud.android.utils.MimeTypeUtil;
-import com.owncloud.android.utils.PowerUtils;
 
 import java.io.File;
 import java.text.ParsePosition;
@@ -60,6 +64,8 @@ import java.util.TimeZone;
 import androidx.annotation.NonNull;
 import androidx.exifinterface.media.ExifInterface;
 
+import static com.owncloud.android.datamodel.OCFile.PATH_SEPARATOR;
+
 /*
     Job that:
         - restarts existing jobs if required
@@ -68,9 +74,27 @@ import androidx.exifinterface.media.ExifInterface;
  */
 public class FilesSyncJob extends Job {
     public static final String TAG = "FilesSyncJob";
-    public static final String SKIP_CUSTOM = "skipCustom";
+    static final String SKIP_CUSTOM = "skipCustom";
     public static final String OVERRIDE_POWER_SAVING = "overridePowerSaving";
     private static final String WAKELOCK_TAG_SEPARATION = ":";
+
+    private UserAccountManager userAccountManager;
+    private AppPreferences preferences;
+    private UploadsStorageManager uploadsStorageManager;
+    private ConnectivityService connectivityService;
+    private PowerManagementService powerManagementService;
+
+    FilesSyncJob(final UserAccountManager userAccountManager,
+                        final AppPreferences preferences,
+                        final UploadsStorageManager uploadsStorageManager,
+                        final ConnectivityService connectivityService,
+                        final PowerManagementService powerManagementService) {
+        this.userAccountManager = userAccountManager;
+        this.preferences = preferences;
+        this.uploadsStorageManager = uploadsStorageManager;
+        this.connectivityService = connectivityService;
+        this.powerManagementService = powerManagementService;
+    }
 
     @NonNull
     @Override
@@ -89,8 +113,10 @@ public class FilesSyncJob extends Job {
         final boolean overridePowerSaving = bundle.getBoolean(OVERRIDE_POWER_SAVING, false);
 
         // If we are in power save mode, better to postpone upload
-        if (PowerUtils.isPowerSaveMode(context) && !overridePowerSaving) {
-            wakeLock.release();
+        if (powerManagementService.isPowerSavingEnabled() && !overridePowerSaving) {
+            if (wakeLock != null) {
+                wakeLock.release();
+            }
             return Result.SUCCESS;
         }
 
@@ -98,14 +124,17 @@ public class FilesSyncJob extends Job {
         boolean lightVersion = resources.getBoolean(R.bool.syncedFolder_light);
 
         final boolean skipCustom = bundle.getBoolean(SKIP_CUSTOM, false);
-        FilesSyncHelper.restartJobsIfNeeded();
-        FilesSyncHelper.insertAllDBEntries(skipCustom);
+        FilesSyncHelper.restartJobsIfNeeded(uploadsStorageManager,
+                                            userAccountManager,
+                                            connectivityService,
+                                            powerManagementService);
+        FilesSyncHelper.insertAllDBEntries(preferences, skipCustom);
 
         // Create all the providers we'll need
         final ContentResolver contentResolver = context.getContentResolver();
         final FilesystemDataProvider filesystemDataProvider = new FilesystemDataProvider(contentResolver);
         SyncedFolderProvider syncedFolderProvider = new SyncedFolderProvider(contentResolver,
-            PreferenceManager.fromContext(context));
+                                                                             preferences);
 
         Locale currentLocale = context.getResources().getConfiguration().locale;
         SimpleDateFormat sFormatter = new SimpleDateFormat("yyyy:MM:dd HH:mm:ss", currentLocale);
@@ -137,7 +166,7 @@ public class FilesSyncJob extends Job {
         boolean needsWifi;
         File file;
         ArbitraryDataProvider arbitraryDataProvider;
-        Account account = AccountUtils.getOwnCloudAccountByName(context, syncedFolder.getAccount());
+        Account account = userAccountManager.getAccountByName(syncedFolder.getAccount());
 
         if (lightVersion) {
             arbitraryDataProvider = new ArbitraryDataProvider(context.getContentResolver());
@@ -172,7 +201,7 @@ public class FilesSyncJob extends Job {
             if (!subfolderByDate) {
                 String adaptedPath = file.getAbsolutePath()
                         .replace(syncedFolder.getLocalPath(), "")
-                        .replace("/" + file.getName(), "");
+                        .replace(PATH_SEPARATOR + file.getName(), "");
                 remotePath += adaptedPath;
             }
 

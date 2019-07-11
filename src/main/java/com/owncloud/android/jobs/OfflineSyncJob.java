@@ -2,7 +2,9 @@
  * Nextcloud Android client application
  *
  * @author Mario Danic
+ * @author Chris Narkiewicz
  * Copyright (C) 2018 Mario Danic
+ * Copyright (C) 2019 Chris Narkiewicz <hello@ezaquarii.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU AFFERO GENERAL PUBLIC LICENSE
@@ -27,28 +29,39 @@ import android.os.PowerManager;
 import com.evernote.android.job.Job;
 import com.evernote.android.job.JobManager;
 import com.evernote.android.job.JobRequest;
-import com.evernote.android.job.util.Device;
+import com.nextcloud.client.account.UserAccountManager;
+import com.nextcloud.client.device.PowerManagementService;
+import com.nextcloud.client.network.ConnectivityService;
 import com.owncloud.android.MainApp;
-import com.owncloud.android.authentication.AccountUtils;
 import com.owncloud.android.datamodel.FileDataStorageManager;
 import com.owncloud.android.datamodel.OCFile;
 import com.owncloud.android.lib.common.operations.RemoteOperationResult;
 import com.owncloud.android.lib.common.utils.Log_OC;
 import com.owncloud.android.lib.resources.files.CheckEtagRemoteOperation;
 import com.owncloud.android.operations.SynchronizeFileOperation;
-import com.owncloud.android.utils.ConnectivityUtils;
 import com.owncloud.android.utils.FileStorageUtils;
-import com.owncloud.android.utils.PowerUtils;
 
 import java.io.File;
 import java.util.Set;
 
 import androidx.annotation.NonNull;
 
+import static com.owncloud.android.datamodel.OCFile.PATH_SEPARATOR;
+import static com.owncloud.android.datamodel.OCFile.ROOT_PATH;
+
 public class OfflineSyncJob extends Job {
     public static final String TAG = "OfflineSyncJob";
 
     private static final String WAKELOCK_TAG_SEPARATION = ":";
+    private final UserAccountManager userAccountManager;
+    private final ConnectivityService connectivityService;
+    private final PowerManagementService powerManagementService;
+
+    OfflineSyncJob(UserAccountManager userAccountManager, ConnectivityService connectivityService, PowerManagementService powerManagementService) {
+        this.userAccountManager = userAccountManager;
+        this.connectivityService = connectivityService;
+        this.powerManagementService = powerManagementService;
+    }
 
     @NonNull
     @Override
@@ -56,9 +69,9 @@ public class OfflineSyncJob extends Job {
         final Context context = getContext();
 
         PowerManager.WakeLock wakeLock = null;
-        if (!PowerUtils.isPowerSaveMode(context) &&
-                Device.getNetworkType(context).equals(JobRequest.NetworkType.UNMETERED) &&
-                !ConnectivityUtils.isInternetWalled(context)) {
+        if (!powerManagementService.isPowerSavingEnabled() &&
+                connectivityService.getActiveNetworkType() == JobRequest.NetworkType.UNMETERED &&
+                !connectivityService.isInternetWalled()) {
             Set<Job> jobs = JobManager.instance().getAllJobsForTag(TAG);
             for (Job job : jobs) {
                 if (!job.isFinished() && !job.equals(this)) {
@@ -76,13 +89,13 @@ public class OfflineSyncJob extends Job {
                 }
             }
 
-            Account[] accounts = AccountUtils.getAccounts(context);
+            Account[] accounts = userAccountManager.getAccounts();
 
             for (Account account : accounts) {
                 FileDataStorageManager storageManager = new FileDataStorageManager(account,
                         getContext().getContentResolver());
 
-                OCFile ocRoot = storageManager.getFileByPath("/");
+                OCFile ocRoot = storageManager.getFileByPath(ROOT_PATH);
 
                 if (ocRoot.getStoragePath() == null) {
                     break;
@@ -101,7 +114,7 @@ public class OfflineSyncJob extends Job {
 
     private void recursive(File folder, FileDataStorageManager storageManager, Account account) {
         String downloadFolder = FileStorageUtils.getSavePath(account.name);
-        String folderName = folder.getAbsolutePath().replaceFirst(downloadFolder, "") + "/";
+        String folderName = folder.getAbsolutePath().replaceFirst(downloadFolder, "") + PATH_SEPARATOR;
         Log_OC.d(TAG, folderName + ": enter");
 
         // exit

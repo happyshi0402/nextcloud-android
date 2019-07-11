@@ -7,11 +7,8 @@
     <string name="account_icon">帳號圖示</string>
     <string name="account_not_found">沒有找到任何帳戶</string>
     <string name="action_clear_failed_uploads">清除失敗的上傳</string>
-    <string name="action_clear_successful_uploads">清除成功的上傳紀錄</string>
     <string name="action_empty_notifications">清除所有通知訊息</string>
     <string name="action_empty_trashbin">清空回收桶</string>
-    <string name="action_force_rescan">強制重新掃描</string>
-    <string name="action_retry_uploads">重試未成功的上傳項目</string>
     <string name="action_send_share">傳送/分享</string>
     <string name="action_switch_grid_view">網格檢視</string>
     <string name="action_switch_list_view">清單檢視</string>
@@ -22,6 +19,7 @@
     <string name="actionbar_mkdir">新資料夾</string>
     <string name="actionbar_move">移動</string>
     <string name="actionbar_open_as_richdocument">使用 Collabora 開啟</string>
+    <string name="actionbar_open_as_richdocument_parameter">使用%1$s開啟</string>
     <string name="actionbar_open_with">開啟方式</string>
     <string name="actionbar_search">搜尋</string>
     <string name="actionbar_see_details">詳細資料</string>
@@ -36,6 +34,7 @@
     <string name="activity_chooser_title">傳送連結到…</string>
     <string name="activity_icon">活動</string>
     <string name="add_to_cloud">新增到 %1$s </string>
+    <string name="associated_account_not_found">無法找到連結帳戶</string>
     <string name="auth_access_failed">存取失敗：%1$s</string>
     <string name="auth_account_does_not_exist">此帳號尚未加入到這個裝置</string>
     <string name="auth_account_not_new">此裝置上已經存在同樣伺服器與使用者帳戶</string>
@@ -212,6 +211,7 @@
     <string name="end_to_end_encryption_enter_password">請輸入密碼來解密私鑰</string>
     <string name="end_to_end_encryption_folder_not_empty">資料夾不為空</string>
     <string name="end_to_end_encryption_generating_keys">正在產生金鑰…</string>
+    <string name="end_to_end_encryption_keywords_description">透過組合12個字來產生安全的密碼，使你可以安全的瀏覽與加密檔案。請確保這組密碼只有你知道，並寫記在紙上妥善保管。</string>
     <string name="end_to_end_encryption_not_enabled">伺服器上的端對端加密被停用</string>
     <string name="end_to_end_encryption_not_supported">加密功能只能在 KitKat(4.4 以上) 才能啟用</string>
     <string name="end_to_end_encryption_passphrase_title">為您12個字的加密密碼加上註解</string>
@@ -225,6 +225,7 @@
     <string name="error__upload__local_file_not_copied">%1$s 無法被複製到本地資料夾 %2$s</string>
     <string name="error_cant_bind_to_operations_service">嚴重錯誤：無法執行操作</string>
     <string name="error_comment_file">留言錯誤</string>
+    <string name="error_retrieving_file">檢索檔案時發生錯誤</string>
     <string name="error_retrieving_templates">取得範本時發生錯誤</string>
     <string name="error_starting_direct_camera_upload">無法啟動相機</string>
     <string name="fab_label">新增或上傳</string>
@@ -320,9 +321,11 @@
     <string name="hint_name">名稱</string>
     <string name="hint_note">筆記</string>
     <string name="hint_password">密碼</string>
+    <string name="host_not_available">伺服器無法使用</string>
     <string name="host_your_own_server">擁有您自己的伺服器</string>
     <string name="instant_upload_on_charging">只在充電時上傳</string>
     <string name="instant_upload_path">/InstantUpload</string>
+    <string name="io_error">存取錯誤</string>
     <string name="learn_more">瞭解更多</string>
     <string name="link">連結</string>
     <string name="list_layout">清單顯示</string>
@@ -373,11 +376,13 @@
     <string name="new_media_folder_detected">偵測新媒體資料夾 %1$s</string>
     <string name="new_media_folder_photos">相片</string>
     <string name="new_media_folder_videos">影片</string>
+    <string name="new_notification">新的通知</string>
     <string name="new_version_was_created">新版本已建立</string>
     <string name="no_browser_available">沒有應用程式可以開啟連結</string>
     <string name="no_pdf_app_available">沒有應用程式可以開啟 PDF</string>
     <string name="note_confirm">傳送</string>
     <string name="note_could_not_sent">傳送留言失敗</string>
+    <string name="notification_action_failed">執行的動作失敗</string>
     <string name="notification_channel_download_description">顯示下載進度</string>
     <string name="notification_channel_download_name">下載通知頻道</string>
     <string name="notification_channel_file_observer_description">檢查變動的檔案</string>
@@ -395,9 +400,12 @@
     <string name="notifications_loading_activity">載入通知…</string>
     <string name="notifications_no_results_headline">沒有通知</string>
     <string name="notifications_no_results_message">請稍候再檢查</string>
+    <string name="oauth_2_0_access_end_point_address_hint">存取終點位址</string>
+    <string name="oauth_2_0_auth_end_point_address_hint">認證終點位址</string>
     <string name="oauth_check_onoff">透過OAuth 2.0登入</string>
     <string name="oauth_login_connection">連接到OAuth 2.0伺服器…</string>
     <string name="offline_mode">沒有網路連線</string>
+    <string name="operation_canceled">操作取消</string>
     <string name="outdated_server">伺服器已過期，請升級！</string>
     <string name="overflow_menu">更多</string>
     <string name="participate_beta_headline">測試開發版本</string>
@@ -463,9 +471,11 @@
     <string name="prefs_instant_upload_path_use_subfolders_summary">依據年月存在子資料夾內</string>
     <string name="prefs_instant_upload_path_use_subfolders_title">使用子資料夾</string>
     <string name="prefs_license">授權</string>
+    <string name="prefs_lock">App 通行碼</string>
     <string name="prefs_lock_device_credentials_enabled">設備認證方式已啟動</string>
     <string name="prefs_lock_device_credentials_not_setup">未設定任何設備認證方式</string>
     <string name="prefs_lock_none">無</string>
+    <string name="prefs_lock_title">保護 app 的使用</string>
     <string name="prefs_lock_using_device_credentials">設備認證方式</string>
     <string name="prefs_lock_using_passcode">通行碼</string>
     <string name="prefs_log_delete_history_button">刪除記錄</string>
@@ -489,15 +499,19 @@
 請從這裡下載:%2$s</string>
     <string name="recommend_urls">%1$s或%2$s</string>
     <string name="remove_fail_msg">刪除失敗</string>
+    <string name="remove_notification_failed">移除通知失敗</string>
+    <string name="remove_push_notification">移除</string>
     <string name="remove_success_msg">已刪除</string>
     <string name="rename_dialog_title">輸入新名稱</string>
     <string name="rename_local_fail_msg">無法更名本地複本，請嚐試用不同名稱</string>
     <string name="rename_server_fail_msg">不可更名，名稱已存在</string>
+    <string name="reshare_not_allowed">不允許重新分享</string>
     <string name="resharing_is_not_allowed">不允許重新分享</string>
     <string name="resized_image_not_possible">沒有可用調整過的相片</string>
     <string name="resized_image_not_possible_download">沒有可用調整過的相片，下載完整相片？</string>
     <string name="restore">復原檔案</string>
     <string name="restore_button_description">復原檔案</string>
+    <string name="retrieving_file">正在檢索檔案...</string>
     <string name="richdocuments_failed_to_load_document">載入文件失敗</string>
     <string name="saml_authentication_required_text">請輸入密碼</string>
     <string name="saml_authentication_wrong_pass">密碼錯誤</string>
@@ -561,6 +575,7 @@
     <string name="shared_icon_share">分享</string>
     <string name="shared_icon_shared">已分享</string>
     <string name="shared_icon_shared_via_link">透過連結分享</string>
+    <string name="shared_with_you_by">%1$s已經和你分享</string>
     <string name="sharee_add_failed">分享失敗</string>
     <string name="single_sign_on_request_token" formatted="true">允許%1$s存取您的Nextcloud帳號%2$s？</string>
     <string name="sort_by">排列方式</string>
@@ -595,9 +610,15 @@
     <string name="ssl_validator_reason_cert_not_trusted">- 伺服器使用未被信任的憑證</string>
     <string name="ssl_validator_reason_cert_not_yet_valid">- 伺服器憑證的生效日在未來</string>
     <string name="ssl_validator_reason_hostname_not_verified">- 這個伺服器的憑證與使用的 URL 不相符</string>
+    <string name="storage_camera">相機</string>
+    <string name="storage_choose_location">選擇儲存位置</string>
     <string name="storage_description_default">預設</string>
-    <string name="store_short_desc">Nextcloud Android 應用程式讓您存取您 Nextcloud 上的所有檔案。</string>
-    <string name="store_short_dev_desc">Nextcloud 開發應用程式是一個開發版的快照，而且可以同時安裝</string>
+    <string name="storage_documents">文件</string>
+    <string name="storage_downloads">下載</string>
+    <string name="storage_internal_storage">內部儲存</string>
+    <string name="storage_movies">電影</string>
+    <string name="storage_music">音樂</string>
+    <string name="storage_pictures">圖片</string>
     <string name="stream">串流…</string>
     <string name="stream_not_possible_headline">不可能使用內部串流</string>
     <string name="stream_not_possible_message">請改為下載媒體或使用外部應用程式。</string>
@@ -628,6 +649,7 @@
     <string name="tags">標籤</string>
     <string name="test_server_button">測試伺服器連線</string>
     <string name="thumbnail">縮圖</string>
+    <string name="timeout_richDocuments">載入需要花一段時間...</string>
     <string name="trashbin_activity_title">回收桶</string>
     <string name="trashbin_empty_headline">無已刪除檔案</string>
     <string name="trashbin_empty_message">你可以從這裡復原已刪除檔案</string>
@@ -689,7 +711,6 @@
     <string name="uploader_upload_in_progress_content">%1$d%% 上傳 %2$s 中</string>
     <string name="uploader_upload_in_progress_ticker">上傳中…</string>
     <string name="uploader_upload_succeeded_content_single">%1$s 已上傳</string>
-    <string name="uploader_upload_succeeded_ticker">已上傳</string>
     <string name="uploader_wrn_no_account_quit_btn_text">離開</string>
     <string name="uploader_wrn_no_account_setup_btn_text">設定</string>
     <string name="uploader_wrn_no_account_text">無 %1$s 帳戶，請先建立帳戶。</string>
@@ -730,7 +751,20 @@
     <string name="wait_checking_credentials">檢查儲存的帳號密碼</string>
     <string name="wait_for_tmp_copy_from_private_storage">由私有儲存空間複製檔案中</string>
     <string name="what_s_new_image">有什麼新圖片？</string>
+    <string name="whats_new_device_credentials_content">請使用 圖形密碼, 密碼或者指紋 以保護您的資料安全</string>
     <string name="whats_new_device_credentials_title">使用裝置的內部保護</string>
     <string name="whats_new_skip">略過</string>
     <string name="whats_new_title">新增到 %1$s </string>
-    </resources>
+    <plurals name="sync_fail_in_favourites_content">
+        <item quantity="other">無法同步 %1$d 檔案 (衝突: %2$d)</item>
+    </plurals>
+    <plurals name="file_list__footer__folder">
+        <item quantity="other">%1$d 個資料夾</item>
+    </plurals>
+    <plurals name="file_list__footer__file">
+        <item quantity="other">%1$d 個檔案</item>
+    </plurals>
+    <plurals name="items_selected_count">
+        <item quantity="other">已選取 %d 個</item>
+    </plurals>
+</resources>

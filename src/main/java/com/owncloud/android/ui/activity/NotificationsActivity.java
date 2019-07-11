@@ -3,8 +3,10 @@
  *
  * @author Andy Scherzinger
  * @author Mario Danic
+ * @author Chris Narkiewicz
  * Copyright (C) 2017 Andy Scherzinger
  * Copyright (C) 2017 Mario Danic
+ * Copyright (C) 2019 Chris Narkiewicz <hello@ezaquarii.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -38,8 +40,8 @@ import android.widget.TextView;
 
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.snackbar.Snackbar;
+import com.nextcloud.client.account.UserAccountManager;
 import com.owncloud.android.R;
-import com.owncloud.android.authentication.AccountUtils;
 import com.owncloud.android.datamodel.ArbitraryDataProvider;
 import com.owncloud.android.jobs.NotificationJob;
 import com.owncloud.android.lib.common.OwnCloudAccount;
@@ -125,8 +127,8 @@ public class NotificationsActivity extends FileActivity implements Notifications
             String account = getIntent().getExtras().getString(NotificationJob.KEY_NOTIFICATION_ACCOUNT);
 
             if (account != null && (currentAccount == null || !account.equalsIgnoreCase(currentAccount.name))) {
-                AccountUtils.setCurrentOwnCloudAccount(this, account);
-                setAccount(AccountUtils.getCurrentOwnCloudAccount(this));
+                accountManager.setCurrentOwnCloudAccount(account);
+                setAccount(getUserAccountManager().getCurrentAccount());
                 currentAccount = getAccount();
             }
         }
@@ -176,8 +178,8 @@ public class NotificationsActivity extends FileActivity implements Notifications
             } else {
                 ArbitraryDataProvider arbitraryDataProvider = new ArbitraryDataProvider(getContentResolver());
 
-                    boolean usesOldLogin = arbitraryDataProvider.getBooleanValue(currentAccount.name,
-                            AccountUtils.ACCOUNT_USES_STANDARD_PASSWORD);
+                boolean usesOldLogin = arbitraryDataProvider.getBooleanValue(currentAccount.name,
+                                                                     UserAccountManager.ACCOUNT_USES_STANDARD_PASSWORD);
 
                 if (usesOldLogin) {
                     snackbar = Snackbar.make(emptyContentContainer, R.string.push_notifications_old_login,
@@ -244,7 +246,13 @@ public class NotificationsActivity extends FileActivity implements Notifications
 
         if (getResources().getBoolean(R.bool.bottom_toolbar_enabled)) {
             bottomNavigationView.setVisibility(View.VISIBLE);
-            DisplayUtils.setupBottomBar(bottomNavigationView, getResources(), this, -1);
+            DisplayUtils.setupBottomBar(
+                getUserAccountManager().getCurrentAccount(),
+                bottomNavigationView,
+                getResources(),
+                accountManager,
+                this,
+                -1);
         }
 
         fetchAndSetData();
@@ -260,7 +268,7 @@ public class NotificationsActivity extends FileActivity implements Notifications
                 try {
                     OwnCloudAccount ocAccount = new OwnCloudAccount(currentAccount, this);
                     client = OwnCloudClientManagerFactory.getDefaultSingleton().getClientFor(ocAccount, this);
-                    client.setOwnCloudVersion(AccountUtils.getServerVersion(currentAccount));
+                    client.setOwnCloudVersion(accountManager.getServerVersion(currentAccount));
                 } catch (com.owncloud.android.lib.common.accounts.AccountUtils.AccountNotFoundException |
                     IOException | OperationCanceledException | AuthenticatorException e) {
                     Log_OC.e(TAG, "Error initializing client", e);
@@ -367,17 +375,21 @@ public class NotificationsActivity extends FileActivity implements Notifications
     }
 
     @Override
-    public void onRemovedNotification(boolean isSuccess, NotificationListAdapter.NotificationViewHolder holder) {
-        if (isSuccess) {
-            adapter.removeNotification(holder);
-
-            if (adapter.getItemCount() == 0) {
-                setEmptyContent(noResultsHeadline, noResultsMessage);
-                swipeListRefreshLayout.setVisibility(View.GONE);
-                swipeEmptyListRefreshLayout.setVisibility(View.VISIBLE);
-            }
-        } else {
+    public void onRemovedNotification(boolean isSuccess) {
+        if (!isSuccess) {
             DisplayUtils.showSnackMessage(this, getString(R.string.remove_notification_failed));
+            fetchAndSetData();
+        }
+    }
+
+    @Override
+    public void removeNotification(NotificationListAdapter.NotificationViewHolder holder) {
+        adapter.removeNotification(holder);
+
+        if (adapter.getItemCount() == 0) {
+            setEmptyContent(noResultsHeadline, noResultsMessage);
+            swipeListRefreshLayout.setVisibility(View.GONE);
+            swipeEmptyListRefreshLayout.setVisibility(View.VISIBLE);
         }
     }
 

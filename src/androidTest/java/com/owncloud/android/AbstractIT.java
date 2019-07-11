@@ -9,6 +9,8 @@ import android.content.Context;
 import android.net.Uri;
 import android.os.Bundle;
 
+import com.nextcloud.client.account.UserAccountManager;
+import com.nextcloud.client.account.UserAccountManagerImpl;
 import com.owncloud.android.datamodel.FileDataStorageManager;
 import com.owncloud.android.lib.common.OwnCloudClient;
 import com.owncloud.android.lib.common.OwnCloudClientFactory;
@@ -38,38 +40,38 @@ public abstract class AbstractIT {
 
     protected static OwnCloudClient client;
     static Account account;
-    protected static Context context;
+    protected static Context targetContext;
 
     @BeforeClass
     public static void beforeAll() {
         try {
-            context = InstrumentationRegistry.getInstrumentation().getTargetContext();
+            targetContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
             Bundle arguments = androidx.test.platform.app.InstrumentationRegistry.getArguments();
 
             Uri baseUrl = Uri.parse(arguments.getString("TEST_SERVER_URL"));
-            String username = arguments.getString("TEST_SERVER_USERNAME");
+            String loginName = arguments.getString("TEST_SERVER_USERNAME");
             String password = arguments.getString("TEST_SERVER_PASSWORD");
 
-            Account temp = new Account(username + "@" + baseUrl, MainApp.getAccountType(context));
-
-            if (!com.owncloud.android.authentication.AccountUtils.exists(temp, context)) {
-                AccountManager accountManager = AccountManager.get(context);
-                accountManager.addAccountExplicitly(temp, password, null);
-                accountManager.setUserData(temp, AccountUtils.Constants.KEY_OC_ACCOUNT_VERSION,
-                        Integer.toString(com.owncloud.android.authentication.AccountUtils.ACCOUNT_VERSION));
-                accountManager.setUserData(temp, AccountUtils.Constants.KEY_OC_VERSION, "14.0.0.0");
-                accountManager.setUserData(temp, AccountUtils.Constants.KEY_OC_BASE_URL, baseUrl.toString());
-                accountManager.setUserData(temp, AccountUtils.Constants.KEY_USER_ID, username);
+            Account temp = new Account(loginName + "@" + baseUrl, MainApp.getAccountType(targetContext));
+            UserAccountManager accountManager = UserAccountManagerImpl.fromContext(targetContext);
+            if (!accountManager.exists(temp)) {
+                AccountManager platformAccountManager = AccountManager.get(targetContext);
+                platformAccountManager.addAccountExplicitly(temp, password, null);
+                platformAccountManager.setUserData(temp, AccountUtils.Constants.KEY_OC_ACCOUNT_VERSION,
+                        Integer.toString(UserAccountManager.ACCOUNT_VERSION));
+                platformAccountManager.setUserData(temp, AccountUtils.Constants.KEY_OC_VERSION, "14.0.0.0");
+                platformAccountManager.setUserData(temp, AccountUtils.Constants.KEY_OC_BASE_URL, baseUrl.toString());
+                platformAccountManager.setUserData(temp, AccountUtils.Constants.KEY_USER_ID, loginName); // same as userId
             }
 
-            account = com.owncloud.android.authentication.AccountUtils.getOwnCloudAccountByName(context,
-                    username + "@" + baseUrl);
+            final UserAccountManager userAccountManager = UserAccountManagerImpl.fromContext(targetContext);
+            account = userAccountManager.getAccountByName(loginName + "@" + baseUrl);
 
             if (account == null) {
                 throw new ActivityNotFoundException();
             }
 
-            client = OwnCloudClientFactory.createOwnCloudClient(account, context);
+            client = OwnCloudClientFactory.createOwnCloudClient(account, targetContext);
 
             createDummyFiles();
 
@@ -86,7 +88,7 @@ public abstract class AbstractIT {
     }
 
     FileDataStorageManager getStorageManager() {
-        return new FileDataStorageManager(account, context.getContentResolver());
+        return new FileDataStorageManager(account, targetContext.getContentResolver());
     }
 
     private static void createDummyFiles() throws IOException {

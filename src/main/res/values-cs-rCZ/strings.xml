@@ -3,15 +3,13 @@
     <string name="about_android">%1$s aplikace pro Android</string>
     <string name="about_title">O aplikaci</string>
     <string name="about_version">verze %1$s</string>
+    <string name="about_version_with_build">verze %1$s, sestavení č. %2$s</string>
     <string name="account_creation_failed">Vytvoření účtu se nezdařilo</string>
     <string name="account_icon">Ikona účtu</string>
     <string name="account_not_found">Účet nenalezen!</string>
     <string name="action_clear_failed_uploads">Vyčistit nezdařené nahrávání</string>
-    <string name="action_clear_successful_uploads">Vyčistit úspěšná nahrání</string>
     <string name="action_empty_notifications">Vyčistit všechna oznámení</string>
     <string name="action_empty_trashbin">Vyprázdnit koš</string>
-    <string name="action_force_rescan">Vynutit indexaci</string>
-    <string name="action_retry_uploads">Zkusit znovu nezdařená nahrání</string>
     <string name="action_send_share">Poslat/sdílet</string>
     <string name="action_switch_grid_view">Zobrazení v mřížce</string>
     <string name="action_switch_list_view">Zobrazení v seznamu</string>
@@ -22,6 +20,7 @@
     <string name="actionbar_mkdir">Nová složka</string>
     <string name="actionbar_move">Přesunout</string>
     <string name="actionbar_open_as_richdocument">Otevřít pomocí Collabora</string>
+    <string name="actionbar_open_as_richdocument_parameter">Otevřít pomocí %1$s</string>
     <string name="actionbar_open_with">Otevřít pomocí</string>
     <string name="actionbar_search">Hledat</string>
     <string name="actionbar_see_details">Podrobnosti</string>
@@ -36,6 +35,7 @@
     <string name="activity_chooser_title">Poslat odkaz na…</string>
     <string name="activity_icon">Aktivita</string>
     <string name="add_to_cloud">Přidat k %1$s</string>
+    <string name="associated_account_not_found">Související účet nenalezen!</string>
     <string name="auth_access_failed">Přístup se nezdařil: %1$s</string>
     <string name="auth_account_does_not_exist">Účet zatím není na tomto zařízení přidán</string>
     <string name="auth_account_not_new">Účet pro stejného uživatele a server už v zařízení existuje</string>
@@ -227,9 +227,11 @@
     <string name="error__upload__local_file_not_copied">%1$s nelze zkopírovat do místní složky %2$s</string>
     <string name="error_cant_bind_to_operations_service">Kritická chyba: operace nelze provést</string>
     <string name="error_comment_file">Chyba při přidávání komentáře k souboru</string>
+    <string name="error_retrieving_file">Chyba při získávání souboru</string>
     <string name="error_retrieving_templates">Chyba při získávání šablon</string>
     <string name="error_starting_direct_camera_upload">Chyba při spouštění kamery</string>
     <string name="fab_label">Přidat nebo nahrát</string>
+    <string name="failed_to_download">Předání souboru správci stahování se nezdařilo</string>
     <string name="fallback_weblogin_back">Zpět</string>
     <string name="fallback_weblogin_text">Vrátit se ke starému způsobu přihlašování</string>
     <string name="favorite">Přidat do oblíbených</string>
@@ -517,6 +519,7 @@
     <string name="resized_image_not_possible_download">Zmenšená verze obrázku není k dispozici. Stáhnout obrázek v plné velikosti?</string>
     <string name="restore">Obnovit soubor</string>
     <string name="restore_button_description">Obnovit smazaný soubor</string>
+    <string name="retrieving_file">Získávání souboru…</string>
     <string name="richdocuments_failed_to_load_document">Dokument se nepodařilo načíst!</string>
     <string name="saml_authentication_required_text">Je třeba hesla</string>
     <string name="saml_authentication_wrong_pass">Nesprávné heslo</string>
@@ -549,6 +552,7 @@
     <string name="share_link_file_error">Při pokusu o sdílení tohoto souboru či složky nastala chyba</string>
     <string name="share_link_file_no_exist">Nelze sdílet. Zkontrolujte zda soubor existuje</string>
     <string name="share_link_forbidden_permissions">pro sdílení tohoto souboru</string>
+    <string name="share_link_optional_password_title">Zadejte nepovinné heslo</string>
     <string name="share_link_password_title">Zadejte heslo</string>
     <string name="share_no_expiration_date_label">Nastavit datum skončení platnosti</string>
     <string name="share_no_password_title">Nastavit heslo</string>
@@ -626,10 +630,8 @@
     <string name="storage_movies">Videa</string>
     <string name="storage_music">Hudba</string>
     <string name="storage_pictures">Obrázky</string>
-    <string name="store_full_desc">Svobodně licencovaná Nexcloud Android aplikace, dávající vám mobilní svobodu.\n\nFunkce:\n* Snadno použitelné moderní rozhraní, přizpůsobené vzhledu, používaném na vašem serveru\n* Nahrávejte soubory na svůj Nextcloud server\n* Sdílejte je s ostatními\n* Udržujte své oblíbené soubory a složky synchronizované\n* Hledejte napříč všemi složkami na svém serveru\n* Automaticky nahrávejte své fotky a videa, pořízená zařízením\n* Udržujte si přehled pomocí oznámení\n* Podporuje vícero účtů\n* Zabezpečený přístup k vašim datům pomocí otisku prstu nebo PIN kódu\n* Napojení na DAVx5 (dříve známé pod názvem DAVdroid) pro snadné nastavení synchronizace kalendáře a kontaktů\n\n Veškeré nalezené problémy hlaste na https://github.com/nextcloud/android/issues a diskutujte o aplikaci na https://help.nextcloud.com/c/clients/android\n\nNoví v Nextcloud? Nextcloud je soukromý server pro synchronizaci souborů a jejich sdílení, dále pro komunikaci. Jedná se o svobodný software a můžete ho hostovat svými silami nebo za to zaplatit nějaké společnosti. Tím máte pod kontrolou své fotky, kalendář a kontakty, dokumenty a vše ostatní.\n\nPodívejte se na Nextcloud na https://nextcloud.com</string>
-    <string name="store_full_dev_desc">Svobodná (copyleft) aplikace Nexcloud pro Android, dává vám mobilní svobodu.\nToto je oficiální vývojová verze, obsahující denní vzorek všech nových nevyzkoušených funkcí, které mohou způsobovat nestabilitu a vést ke ztrátě dat. Aplikace v tomto stádiu vývoje je určena uživatelům, kteří jsou ochotní zkoušet a hlásit chyby, které se vyskytnou. Nepoužívejte pro svou produkční práci!\n\nObě oficiální verze, jak vývojová tak ostrá jsou k dispozici na F-droid a je možné je mít nainstalované souběžně.</string>
-    <string name="store_short_desc">Aplikace Nextcloud pro Android poskytuje přístup ke všem souborům na vašem Nextcloud.</string>
-    <string name="store_short_dev_desc">Aplikace Nextcloud Dev je ukázkou stavu vývoje a může být nainstalována paralelně.</string>
+    <string name="store_short_desc">Produktivní platforma hostovaná u vás, kde vaše data jsou opravdu vaše</string>
+    <string name="store_short_dev_desc">Produktivní platforma hostovaná u vás, kde vaše data jsou opravdu vaše (vývojová verze)</string>
     <string name="stream">Proudově vysílat s…</string>
     <string name="stream_not_possible_headline">Vnitřní proudové vysílání není možné</string>
     <string name="stream_not_possible_message">Médium si namísto toho stáhněte nebo použijte externí aplikaci.</string>
@@ -724,7 +726,6 @@
     <string name="uploader_upload_in_progress_content">%1$d%% Odesílání %2$s</string>
     <string name="uploader_upload_in_progress_ticker">Nahrávání…</string>
     <string name="uploader_upload_succeeded_content_single">%1$s nahráno</string>
-    <string name="uploader_upload_succeeded_ticker">Nahráno</string>
     <string name="uploader_wrn_no_account_quit_btn_text">Ukončit</string>
     <string name="uploader_wrn_no_account_setup_btn_text">Nastavení</string>
     <string name="uploader_wrn_no_account_text">Na tomto přístroji nejsou žádné %1$s účty. Nejdříve zadejte účet.</string>

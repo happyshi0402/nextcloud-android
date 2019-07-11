@@ -30,8 +30,8 @@ import android.view.MenuInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
+import com.nextcloud.client.di.Injectable;
 import com.nextcloud.client.preferences.AppPreferences;
-import com.nextcloud.client.preferences.PreferenceManager;
 import com.owncloud.android.R;
 import com.owncloud.android.lib.common.utils.Log_OC;
 import com.owncloud.android.ui.adapter.LocalFileListAdapter;
@@ -39,6 +39,8 @@ import com.owncloud.android.ui.interfaces.LocalFileListFragmentInterface;
 import com.owncloud.android.utils.FileSortOrder;
 
 import java.io.File;
+
+import javax.inject.Inject;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.GridLayoutManager;
@@ -48,10 +50,13 @@ import androidx.recyclerview.widget.RecyclerView;
 /**
  * A Fragment that lists all files and folders in a given LOCAL path.
  */
-public class LocalFileListFragment extends ExtendedListFragment implements LocalFileListFragmentInterface {
+public class LocalFileListFragment extends ExtendedListFragment implements
+        LocalFileListFragmentInterface,
+        Injectable {
+
     private static final String TAG = LocalFileListFragment.class.getSimpleName();
 
-    private AppPreferences preferences;
+    @Inject AppPreferences preferences;
 
     /** Reference to the Activity which this fragment is attached to. For callbacks */
     private LocalFileListFragment.ContainerActivity mContainerActivity;
@@ -65,7 +70,6 @@ public class LocalFileListFragment extends ExtendedListFragment implements Local
     @Override
     public void onAttach(Context context) {
         super.onAttach(context);
-        preferences = PreferenceManager.fromContext(context);
     }
 
     @Override

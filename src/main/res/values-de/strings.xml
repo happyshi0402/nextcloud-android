@@ -3,15 +3,13 @@
     <string name="about_android">%1$s Android App</string>
     <string name="about_title">Über</string>
     <string name="about_version">Version %1$s</string>
+    <string name="about_version_with_build">Version %1$s, Build #%2$s</string>
     <string name="account_creation_failed">Kontoerstellung fehlgeschlagen</string>
     <string name="account_icon">Konto-Icon</string>
     <string name="account_not_found">Kein Konto gefunden</string>
     <string name="action_clear_failed_uploads">Fehlgeschlagene Uploads entfernen</string>
-    <string name="action_clear_successful_uploads">Entferne erfolgreiche Uploads</string>
     <string name="action_empty_notifications">Alle Benachrichtigungen löschen</string>
     <string name="action_empty_trashbin">Dateien endgültig löschen</string>
-    <string name="action_force_rescan">Neuen Scan erzwingen</string>
-    <string name="action_retry_uploads">Fehlgeschlagene Uploads neu starten</string>
     <string name="action_send_share">Senden/Teilen</string>
     <string name="action_switch_grid_view">Rasteransicht</string>
     <string name="action_switch_list_view">Listenansicht</string>
@@ -22,6 +20,7 @@
     <string name="actionbar_mkdir">Neuer Ordner</string>
     <string name="actionbar_move">Verschieben</string>
     <string name="actionbar_open_as_richdocument">Mit Collabora öffnen</string>
+    <string name="actionbar_open_as_richdocument_parameter">Öffnen mit %1$s</string>
     <string name="actionbar_open_with">Öffnen mit</string>
     <string name="actionbar_search">Suche</string>
     <string name="actionbar_see_details">Details</string>
@@ -36,6 +35,7 @@
     <string name="activity_chooser_title">Link senden an…</string>
     <string name="activity_icon">Aktivitäten</string>
     <string name="add_to_cloud">Hinzufügen zu %1$s</string>
+    <string name="associated_account_not_found">Verknüpftes Konto nicht gefunden!</string>
     <string name="auth_access_failed">Zugriffsfehler: %1$s</string>
     <string name="auth_account_does_not_exist">Das Benutzerkonto ist bislang auf dem Gerät nicht vorhanden</string>
     <string name="auth_account_not_new">Ein Benutzerkonto für den gleichen Benutzer und Server existiert auf diesem Gerät bereits</string>
@@ -84,6 +84,7 @@
     <string name="auto_upload_path">/AutoUpload</string>
     <string name="autoupload_create_new_custom_folder">Erstellen Sie ein Setup für den eigenen Ordner</string>
     <string name="autoupload_custom_folder">Erstellen Sie einen eigenen Ordner</string>
+    <string name="autoupload_disable_power_save_check">Energiesparmodus deaktivieren</string>
     <string name="avatar">Avatar</string>
     <string name="battery_optimization_close">Schliessen</string>
     <string name="battery_optimization_disable">Deaktivieren</string>
@@ -147,9 +148,12 @@
     <string name="copy_file_invalid_into_descendent">Es ist nicht möglich, einen Ordner in einen seiner Unterordner zu kopieren</string>
     <string name="copy_file_invalid_overwrite">Die Datei existiert bereits im Zielverzeichnis</string>
     <string name="copy_file_not_found">Kopieren nicht möglich. Bitte prüfen Sie, ob die Datei existiert</string>
+    <string name="copy_internal_link">Internen Link kopieren</string>
+    <string name="copy_internal_link_subline">Funktioniert nur für Nutzer mit Zugriff auf dieses Verzeichnis</string>
     <string name="copy_link">Link kopieren</string>
     <string name="copy_move_to_encrypted_folder_not_supported">In verschlüsselten Ordner kopieren/verschieben wird aktuell nicht unterstützt.</string>
     <string name="copy_to">Kopieren nach…</string>
+    <string name="could_not_retrieve_url">Konnte URL nicht abrufen</string>
     <string name="create_dir_fail_msg">Verzeichnis konnte nicht erstellt werden</string>
     <string name="create_file_from_template">Erzeuge Datei aus Vorlage…</string>
     <string name="create_new_document">Neues Dokument erstellen</string>
@@ -227,9 +231,11 @@
     <string name="error__upload__local_file_not_copied">%1$s konnte nicht in den lokalen %2$s Ordner kopiert werden</string>
     <string name="error_cant_bind_to_operations_service">Kritischer Fehler: Operationen können nicht ausgeführt werden</string>
     <string name="error_comment_file">Fehler beim Kommentieren der Datei</string>
+    <string name="error_retrieving_file">Fehler beim Abruf der Datei</string>
     <string name="error_retrieving_templates">Fehler beim Laden der Vorlagen</string>
     <string name="error_starting_direct_camera_upload">Fehler beim Starten der Kamera</string>
     <string name="fab_label">Hinzufügen oder hochladen</string>
+    <string name="failed_to_download">Datei konnte nicht an den Downloadmanager übergeben werden</string>
     <string name="fallback_weblogin_back">Zurück</string>
     <string name="fallback_weblogin_text">Zur alten Anmeldungsmethode zurückkehren</string>
     <string name="favorite">Zu den Favoriten hinzufügen</string>
@@ -450,6 +456,8 @@
     <string name="placeholder_media_time">12:23:45</string>
     <string name="placeholder_sentence">Dies ist ein Platzhalter</string>
     <string name="placeholder_timestamp">18.5.2012 12:23</string>
+    <string name="power_check_dialog_title">Energiesparmodus deaktivieren</string>
+    <string name="power_save_check_dialog_message">Bei deaktiviertem Energiesparmodus werden Daten auch bei niedrigem Batterieladezustand hochgeladen.</string>
     <string name="pref_behaviour_entries_delete_file">gelöscht</string>
     <string name="pref_behaviour_entries_keep_file">im Originalordner behalten</string>
     <string name="pref_behaviour_entries_move">in den App-Ordner verschoben</string>
@@ -478,7 +486,7 @@
     <string name="prefs_instant_upload_path_use_subfolders_summary">In Unterordnern speichern, basierend auf Jahr und Monat</string>
     <string name="prefs_instant_upload_path_use_subfolders_title">Unterordner benutzen</string>
     <string name="prefs_license">Lizenz</string>
-    <string name="prefs_lock">App Passwort</string>
+    <string name="prefs_lock">App-PIN</string>
     <string name="prefs_lock_device_credentials_enabled">Geräte-Anmeldedaten aktiviert</string>
     <string name="prefs_lock_device_credentials_not_setup">Keine Geräte-Anmeldedaten eingerichtet.</string>
     <string name="prefs_lock_none">Nichts</string>
@@ -517,6 +525,7 @@
     <string name="resized_image_not_possible_download">Kein verkleinertes Bild verfügbar. Vollbild herunterladen?</string>
     <string name="restore">Datei wiederherstellen</string>
     <string name="restore_button_description">Gelöschte Datei wiederherstellen</string>
+    <string name="retrieving_file">Abrufen der Datei…</string>
     <string name="richdocuments_failed_to_load_document">Laden des Dokuments fehlgeschlagen!</string>
     <string name="saml_authentication_required_text">Passwort erforderlich</string>
     <string name="saml_authentication_wrong_pass">Falsches Passwort</string>
@@ -549,6 +558,7 @@
     <string name="share_link_file_error">Es ist ein Fehler beim Freigeben der Datei oder des Ordners aufgetreten.</string>
     <string name="share_link_file_no_exist">Teilen nicht möglich. Bitte prüfen Sie, ob die Datei existiert</string>
     <string name="share_link_forbidden_permissions">diese Datei zu teilen</string>
+    <string name="share_link_optional_password_title">Passwort eingeben (optional)</string>
     <string name="share_link_password_title">Passwort eingeben</string>
     <string name="share_no_expiration_date_label">Ablaufdatum setzen</string>
     <string name="share_no_password_title">Passwort setzen</string>
@@ -626,10 +636,11 @@
     <string name="storage_movies">Filme</string>
     <string name="storage_music">Musik</string>
     <string name="storage_pictures">Bilder</string>
-    <string name="store_full_desc">Die Open Source Nextcloud Android App erlaubt Ihnen Zugriff auf alle Dateien in Ihrer Nextcloud.\n\nEigenschaften:\n* Einfache, moderne an Ihr Theme angepasste Oberfläche\n* Laden Sie Ihre Dateien auf Ihren Nextcloud Server\n* Teilen Sie Ihre Dateien mit anderen\n* Halten Sie Ihre favorisierten Dateien und Verzeichnisse synchron\n* Suche über alle Ordner auf Ihrem Server\n* Automatisches Hochladen von Fotos und Videos von Ihrem Gerät\n* Bleiben Sie auf dem Laufenden durch Benachrichtigungen\n* Mehrere Konten gleichzeitig\n* Geschützter Zugriff durch Fingerabdruck oder PIN\n* Integration mit DAVx5 (zuvor DAVdroid) für einfaches Konfigurieren der Kalender- &amp; Kontakte-Synchronisation\n\nBitte melden Sie alle Probleme unter https://github.com/nextcloud/android/issues oder diskutieren Sie über die App auf https://help.nextcloud.com/c/clients/android\n\nWas ist die Nextcloud? Die Nextcloud ist ein privater Dateiaustausch &amp; -synchronisierungs Server. Nextcloud ist Open Source und kann auf einem eigenen Server installiert werden. So behalten Sie die Kontrolle über Ihre Fotos, Ihre Kalender und Kontakte, Ihre Dokumente und alle anderen Daten.\n\nSchauen Sie sich Nextcloud an unter https://nextcloud.com.</string>
-    <string name="store_full_dev_desc">Die Open Source Nextcloud Android App ermöglicht es Ihnen auf all Ihre Dateien in Ihrer Nextcloud zuzugreifen.\nDies ist die offizielle Entwicklungsversion und beinhaltet brandaktuelle, ungetestete Funktionalität, welche zu Instabilität oder Datenverlust führen kann. Die App richtet sich an Nutzende, die bereit sind neue Funktionalität auszutesten und Fehler zurückzumelden, sollten sie auftreten. Verwenden Sie diese Version nicht für den produktiven Einsatz!\n\nDie Entwicklungsversion kann neben der offiziellen Nextcloud App installiert werden, welche auch bei F-Droid verfügbar ist.</string>
-    <string name="store_short_desc">Die Nextcloud Android App erlaubt Ihnen den Zugriff auf alle Dateien in Ihrer Nextcloud.</string>
-    <string name="store_short_dev_desc">Nextcloud Dev App ist ein Entwicklungsstand und kann parallel installiert werden</string>
+    <string name="store_full_desc">Die selbst gehostete Produktivitätsplattform gibt Ihnen die volle Kontrolle.\n\nFunktionen:\n* Einfache, moderne Oberfläche. Angepasst an das Design Ihres Servers\n*
+.\n\nEigenschaften:\n* Einfache, moderne an Ihr Design angepasste Oberfläche\n* Laden Sie Ihre Dateien auf Ihren Nextcloud Server\n* Teilen Sie Ihre Dateien mit anderen\n* Halten Sie Ihre favorisierten Dateien und Ordner synchron\n* Suche über alle Ordner auf Ihrem Server\n* Automatisches Hochladen von Fotos und Videos von Ihrem Gerät\n* Bleiben Sie auf dem Laufenden durch Benachrichtigungen\n* Mehrere Konten gleichzeitig\n* Geschützter Zugriff durch Fingerabdruck oder PIN\n* Integration mit DAVx5 (ehemals DAVdroid) für einfaches Konfigurieren der Kalender- &amp; Kontakte-Synchronisation\n\nBitte melden Sie alle Probleme unter https://github.com/nextcloud/android/issues oder diskutieren Sie über die App auf https://help.nextcloud.com/c/clients/android\n\nWas ist die Nextcloud? Die Nextcloud ist ein privater Dateiaustausch &amp; -synchronisierungs Server. Nextcloud ist Open Source und kann auf einem eigenen Server installiert werden. So behalten Sie die Kontrolle über Ihre Fotos, Ihre Kalender und Kontakte, Ihre Dokumente und alle anderen Daten.\n\nSchauen Sie sich Nextcloud an unter https://nextcloud.com.</string>
+    <string name="store_full_dev_desc">Die selbst gehostete Produktivitätsplattform gibt Ihnen die volle Kontrolle.\nDies ist die offizielle Entwicklungsversion und bietet neue, ungetestete Funkitionen. Dies kann zu Instabilitäten und Datenverlust führen. Die App ist für alle Benutzer, die Testen wollen und falls nötig Fehlerberichte erstellen. Nutzen Sie diese Version nicht für Ihre Produktivarbeit!\n\nSowohl die reguläre als auch die Entwicklerversion sind auf F-droid verfügbar und können parallel installiert werden.</string>
+    <string name="store_short_desc">Die selbst gehostete Produktivitätsplattform gibt Ihnen die volle Kontrolle</string>
+    <string name="store_short_dev_desc">Die selbst gehostete Produktivitätsplattform gibt Ihnen die volle Kontrolle (Vorab- Entwicklungsversion)</string>
     <string name="stream">Streamen mit…</string>
     <string name="stream_not_possible_headline">Internes Streamen nicht möglich</string>
     <string name="stream_not_possible_message">Laden Sie sich den Inhalt herunter oder nutzen Sie eine externe App.</string>
@@ -724,7 +735,6 @@
     <string name="uploader_upload_in_progress_content">%1$d%% Hochladen %2$s</string>
     <string name="uploader_upload_in_progress_ticker">Lade hoch…</string>
     <string name="uploader_upload_succeeded_content_single">%1$s hochgeladen</string>
-    <string name="uploader_upload_succeeded_ticker">Hochgeladen</string>
     <string name="uploader_wrn_no_account_quit_btn_text">Beenden</string>
     <string name="uploader_wrn_no_account_setup_btn_text">Einrichten</string>
     <string name="uploader_wrn_no_account_text">Es sind keine %1$s Konten auf Ihrem Gerät eingerichtet. Bitte erstellen Sie zuerst ein Konto.</string>

@@ -154,7 +154,7 @@ public class FileContentProvider extends ContentProvider {
                 count = db.delete(ProviderTableMeta.FILESYSTEM_TABLE_NAME, where, whereArgs);
                 break;
             default:
-                throw new IllegalArgumentException("Unknown uri: " + uri.toString());
+                throw new IllegalArgumentException(String.format(Locale.US, "Unknown uri: %s", uri.toString()));
         }
 
         return count;
@@ -225,7 +225,7 @@ public class FileContentProvider extends ContentProvider {
             case SINGLE_FILE:
                 return ProviderTableMeta.CONTENT_TYPE_ITEM;
             default:
-                throw new IllegalArgumentException("Unknown Uri id: " + uri.toString());
+                throw new IllegalArgumentException(String.format(Locale.US, "Unknown Uri id: %s", uri));
         }
     }
 
@@ -574,7 +574,8 @@ public class FileContentProvider extends ContentProvider {
         db.execSQL("PRAGMA case_sensitive_like = true");
 
         // only file list is accessible via content provider, so only this has to be protected with projectionMap
-        if (mUriMatcher.match(uri) == ROOT_DIRECTORY && projectionArray != null) {
+        if ((mUriMatcher.match(uri) == ROOT_DIRECTORY || mUriMatcher.match(uri) == SINGLE_FILE ||
+            mUriMatcher.match(uri) == DIRECTORY) && projectionArray != null) {
             HashMap<String, String> projectionMap = new HashMap<>();
 
             for (String projection : ProviderTableMeta.FILE_ALL_COLUMNS) {
@@ -701,7 +702,8 @@ public class FileContentProvider extends ContentProvider {
                        + ProviderTableMeta.FILE_UNREAD_COMMENTS_COUNT + INTEGER
                        + ProviderTableMeta.FILE_OWNER_ID + TEXT
                        + ProviderTableMeta.FILE_OWNER_DISPLAY_NAME + TEXT
-                       + ProviderTableMeta.FILE_NOTE + " TEXT);"
+                       + ProviderTableMeta.FILE_NOTE + TEXT
+                       + ProviderTableMeta.FILE_SHAREES + " TEXT);"
         );
     }
 
@@ -736,6 +738,7 @@ public class FileContentProvider extends ContentProvider {
                        + ProviderTableMeta.CAPABILITIES_VERSION_MICRO + INTEGER
                        + ProviderTableMeta.CAPABILITIES_VERSION_STRING + TEXT
                        + ProviderTableMeta.CAPABILITIES_VERSION_EDITION + TEXT
+                       + ProviderTableMeta.CAPABILITIES_EXTENDED_SUPPORT + INTEGER
                        + ProviderTableMeta.CAPABILITIES_CORE_POLLINTERVAL + INTEGER
                        + ProviderTableMeta.CAPABILITIES_SHARING_API_ENABLED + INTEGER // boolean
                        + ProviderTableMeta.CAPABILITIES_SHARING_PUBLIC_ENABLED + INTEGER  // boolean
@@ -767,7 +770,10 @@ public class FileContentProvider extends ContentProvider {
                        + ProviderTableMeta.CAPABILITIES_RICHDOCUMENT + INTEGER
                        + ProviderTableMeta.CAPABILITIES_RICHDOCUMENT_MIMETYPE_LIST + TEXT
                        + ProviderTableMeta.CAPABILITIES_RICHDOCUMENT_DIRECT_EDITING + INTEGER
-                       + ProviderTableMeta.CAPABILITIES_RICHDOCUMENT_TEMPLATES + " INTEGER );");
+                       + ProviderTableMeta.CAPABILITIES_RICHDOCUMENT_TEMPLATES + INTEGER
+                       + ProviderTableMeta.CAPABILITIES_RICHDOCUMENT_OPTIONAL_MIMETYPE_LIST + TEXT
+                       + ProviderTableMeta.CAPABILITIES_SHARING_PUBLIC_ASK_FOR_OPTIONAL_PASSWORD + INTEGER
+                       + ProviderTableMeta.CAPABILITIES_RICHDOCUMENT_PRODUCT_NAME + " TEXT );");
     }
 
     private void createUploadsTable(SQLiteDatabase db) {
@@ -1874,9 +1880,9 @@ public class FileContentProvider extends ContentProvider {
                 db.beginTransaction();
                 try {
                     db.execSQL(ALTER_TABLE + ProviderTableMeta.FILE_TABLE_NAME +
-                            ADD_COLUMN + ProviderTableMeta.FILE_OWNER_ID + " TEXT ");
+                                   ADD_COLUMN + ProviderTableMeta.FILE_OWNER_ID + " TEXT ");
                     db.execSQL(ALTER_TABLE + ProviderTableMeta.FILE_TABLE_NAME +
-                            ADD_COLUMN + ProviderTableMeta.FILE_OWNER_DISPLAY_NAME + " TEXT ");
+                                   ADD_COLUMN + ProviderTableMeta.FILE_OWNER_DISPLAY_NAME + " TEXT ");
 
                     upgraded = true;
                     db.setTransactionSuccessful();
@@ -1895,6 +1901,98 @@ public class FileContentProvider extends ContentProvider {
                 try {
                     db.execSQL(ALTER_TABLE + ProviderTableMeta.FILE_TABLE_NAME +
                                    ADD_COLUMN + ProviderTableMeta.FILE_NOTE + " TEXT ");
+
+                    upgraded = true;
+                    db.setTransactionSuccessful();
+                } finally {
+                    db.endTransaction();
+                }
+            }
+
+            if (!upgraded) {
+                Log_OC.i(SQL, String.format(Locale.ENGLISH, UPGRADE_VERSION_MSG, oldVersion, newVersion));
+            }
+
+            if (oldVersion < 45 && newVersion >= 45) {
+                Log_OC.i(SQL, "Entering in the #45 add sharees to file table");
+                db.beginTransaction();
+                try {
+                    db.execSQL(ALTER_TABLE + ProviderTableMeta.FILE_TABLE_NAME +
+                                   ADD_COLUMN + ProviderTableMeta.FILE_SHAREES + " TEXT ");
+
+                    upgraded = true;
+                    db.setTransactionSuccessful();
+                } finally {
+                    db.endTransaction();
+                }
+            }
+
+            if (!upgraded) {
+                Log_OC.i(SQL, String.format(Locale.ENGLISH, UPGRADE_VERSION_MSG, oldVersion, newVersion));
+            }
+
+            if (oldVersion < 46 && newVersion >= 46) {
+                Log_OC.i(SQL, "Entering in the #46 add optional mimetypes to capabilities table");
+                db.beginTransaction();
+                try {
+                    db.execSQL(ALTER_TABLE + ProviderTableMeta.CAPABILITIES_TABLE_NAME +
+                                   ADD_COLUMN + ProviderTableMeta.CAPABILITIES_RICHDOCUMENT_OPTIONAL_MIMETYPE_LIST
+                                   + " TEXT ");
+
+                    upgraded = true;
+                    db.setTransactionSuccessful();
+                } finally {
+                    db.endTransaction();
+                }
+            }
+
+            if (!upgraded) {
+                Log_OC.i(SQL, String.format(Locale.ENGLISH, UPGRADE_VERSION_MSG, oldVersion, newVersion));
+            }
+
+            if (oldVersion < 47 && newVersion >= 47) {
+                Log_OC.i(SQL, "Entering in the #47 add askForPassword to capability table");
+                db.beginTransaction();
+                try {
+                    db.execSQL(ALTER_TABLE + ProviderTableMeta.CAPABILITIES_TABLE_NAME +
+                                   ADD_COLUMN + ProviderTableMeta.CAPABILITIES_SHARING_PUBLIC_ASK_FOR_OPTIONAL_PASSWORD +
+                                   " INTEGER ");
+
+                    upgraded = true;
+                    db.setTransactionSuccessful();
+                } finally {
+                    db.endTransaction();
+                }
+            }
+
+            if (!upgraded) {
+                Log_OC.i(SQL, String.format(Locale.ENGLISH, UPGRADE_VERSION_MSG, oldVersion, newVersion));
+            }
+
+            if (oldVersion < 48 && newVersion >= 48) {
+                Log_OC.i(SQL, "Entering in the #48 add product name to capabilities table");
+                db.beginTransaction();
+                try {
+                    db.execSQL(ALTER_TABLE + ProviderTableMeta.CAPABILITIES_TABLE_NAME +
+                                   ADD_COLUMN + ProviderTableMeta.CAPABILITIES_RICHDOCUMENT_PRODUCT_NAME + " TEXT ");
+
+                    upgraded = true;
+                    db.setTransactionSuccessful();
+                } finally {
+                    db.endTransaction();
+                }
+            }
+
+            if (!upgraded) {
+                Log_OC.i(SQL, String.format(Locale.ENGLISH, UPGRADE_VERSION_MSG, oldVersion, newVersion));
+            }
+
+            if (oldVersion < 49 && newVersion >= 49) {
+                Log_OC.i(SQL, "Entering in the #49 add extended support to capabilities table");
+                db.beginTransaction();
+                try {
+                    db.execSQL(ALTER_TABLE + ProviderTableMeta.CAPABILITIES_TABLE_NAME +
+                                   ADD_COLUMN + ProviderTableMeta.CAPABILITIES_EXTENDED_SUPPORT + " INTEGER ");
 
                     upgraded = true;
                     db.setTransactionSuccessful();

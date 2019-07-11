@@ -28,9 +28,11 @@ import android.widget.TextView;
 
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
+import com.nextcloud.client.device.DeviceInfo;
 import com.owncloud.android.R;
 import com.owncloud.android.lib.resources.status.OCCapability;
 import com.owncloud.android.ui.activity.FileActivity;
+import com.owncloud.android.ui.activity.RichDocumentsWebView;
 import com.owncloud.android.utils.ThemeUtils;
 
 import butterknife.BindView;
@@ -58,14 +60,21 @@ public class OCFileListBottomSheetDialog extends BottomSheetDialog {
     @BindView(R.id.templates)
     public View templates;
 
+    @BindView(R.id.menu_direct_camera_upload)
+    public View cameraView;
+
     private Unbinder unbinder;
     private OCFileListBottomSheetActions actions;
     private FileActivity fileActivity;
+    private DeviceInfo deviceInfo;
 
-    public OCFileListBottomSheetDialog(FileActivity fileActivity, OCFileListBottomSheetActions actions) {
+    public OCFileListBottomSheetDialog(FileActivity fileActivity,
+                                       OCFileListBottomSheetActions actions,
+                                       DeviceInfo deviceInfo) {
         super(fileActivity);
         this.actions = actions;
         this.fileActivity = fileActivity;
+        this.deviceInfo = deviceInfo;
     }
 
     @Override
@@ -91,8 +100,13 @@ public class OCFileListBottomSheetDialog extends BottomSheetDialog {
 
         OCCapability capability = fileActivity.getCapabilities();
         if (capability.getRichDocuments().isTrue() && capability.getRichDocumentsDirectEditing().isTrue() &&
+            android.os.Build.VERSION.SDK_INT >= RichDocumentsWebView.MINIMUM_API &&
             capability.getRichDocumentsTemplatesAvailable().isTrue()) {
             templates.setVisibility(View.VISIBLE);
+        }
+
+        if (!deviceInfo.hasCamera(getContext())) {
+            cameraView.setVisibility(View.GONE);
         }
 
         setOnShowListener(d ->

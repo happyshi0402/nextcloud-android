@@ -5,8 +5,10 @@
  *  @author masensio
  *  @author Juan Carlos González Cabrero
  *  @author David A. Velasco
+ *  @author Chris Narkiewicz
  *  Copyright (C) 2012  Bartek Przybylski
  *  Copyright (C) 2016 ownCloud Inc.
+ *  Copyright (C) 2019 Chris Narkiewicz <hello@ezaquarii.com>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License version 2,
@@ -41,6 +43,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Parcelable;
+import android.text.TextUtils;
 import android.text.format.DateFormat;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -59,21 +62,10 @@ import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.Spinner;
 import android.widget.TextView;
-import androidx.annotation.DrawableRes;
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.annotation.StringRes;
-import androidx.appcompat.app.ActionBar;
-import androidx.appcompat.app.AlertDialog;
-import androidx.appcompat.app.AlertDialog.Builder;
-import androidx.appcompat.widget.SearchView;
-import androidx.core.content.ContextCompat;
-import androidx.core.graphics.drawable.DrawableCompat;
-import androidx.core.view.MenuItemCompat;
-import androidx.fragment.app.DialogFragment;
-import androidx.fragment.app.FragmentManager;
+
+import com.nextcloud.client.account.UserAccountManager;
+import com.nextcloud.client.di.Injectable;
 import com.nextcloud.client.preferences.AppPreferences;
-import com.nextcloud.client.preferences.PreferenceManager;
 import com.owncloud.android.MainApp;
 import com.owncloud.android.R;
 import com.owncloud.android.datamodel.OCFile;
@@ -105,7 +97,6 @@ import com.owncloud.android.utils.ThemeUtils;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Method;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
@@ -114,15 +105,32 @@ import java.util.Calendar;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Stack;
 import java.util.Vector;
+
+import javax.inject.Inject;
+
+import androidx.annotation.DrawableRes;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.annotation.StringRes;
+import androidx.appcompat.app.ActionBar;
+import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.app.AlertDialog.Builder;
+import androidx.appcompat.widget.SearchView;
+import androidx.core.content.ContextCompat;
+import androidx.core.graphics.drawable.DrawableCompat;
+import androidx.core.view.MenuItemCompat;
+import androidx.fragment.app.DialogFragment;
+import androidx.fragment.app.FragmentManager;
 
 /**
  * This can be used to upload things to an ownCloud instance.
  */
 public class ReceiveExternalFilesActivity extends FileActivity
         implements OnItemClickListener, View.OnClickListener, CopyAndUploadContentUrisTask.OnCopyTmpFilesTaskListener,
-        SortingOrderDialogFragment.OnSortingOrderListener {
+        SortingOrderDialogFragment.OnSortingOrderListener, Injectable {
 
     private static final String TAG = ReceiveExternalFilesActivity.class.getSimpleName();
 
@@ -133,7 +141,7 @@ public class ReceiveExternalFilesActivity extends FileActivity
     public static final String DESKTOP_FILE_SUFFIX = ".desktop";
     public static final int SINGLE_PARENT = 1;
 
-    private AppPreferences preferences;
+    @Inject AppPreferences preferences;
     private AccountManager mAccountManager;
     private Stack<String> mParents = new Stack<>();
     private List<Parcelable> mStreamsToUpload;
@@ -168,7 +176,7 @@ public class ReceiveExternalFilesActivity extends FileActivity
             String parentPath = savedInstanceState.getString(KEY_PARENTS);
 
             if (parentPath != null) {
-                mParents.addAll(Arrays.asList(parentPath.split("/")));
+                mParents.addAll(Arrays.asList(parentPath.split(OCFile.PATH_SEPARATOR)));
             }
 
             mFile = savedInstanceState.getParcelable(KEY_FILE);
@@ -176,7 +184,6 @@ public class ReceiveExternalFilesActivity extends FileActivity
         mAccountManager = (AccountManager) getSystemService(Context.ACCOUNT_SERVICE);
 
         super.onCreate(savedInstanceState);
-        preferences = PreferenceManager.fromContext(this);
 
         // Listen for sync messages
         IntentFilter syncIntentFilter = new IntentFilter(RefreshFolderOperation.
@@ -283,9 +290,11 @@ public class ReceiveExternalFilesActivity extends FileActivity
         }
     }
 
-    public static class DialogMultipleAccount extends DialogFragment {
+    public static class DialogMultipleAccount extends DialogFragment implements Injectable {
         private AccountListAdapter mAccountListAdapter;
         private Drawable mTintedCheck;
+
+        @Inject UserAccountManager accountManager;
 
         @NonNull
         @Override
@@ -297,14 +306,14 @@ public class ReceiveExternalFilesActivity extends FileActivity
             int tint = ThemeUtils.primaryColor(getContext());
             DrawableCompat.setTint(mTintedCheck, tint);
 
-            mAccountListAdapter = new AccountListAdapter(parent, getAccountListItems(parent), mTintedCheck);
+            mAccountListAdapter = new AccountListAdapter(parent, accountManager, getAccountListItems(parent), mTintedCheck);
 
             builder.setTitle(R.string.common_choose_account);
             builder.setAdapter(mAccountListAdapter, (dialog, which) -> {
-                final ReceiveExternalFilesActivity parent1 = (ReceiveExternalFilesActivity) getActivity();
-                parent1.setAccount(parent1.mAccountManager.getAccountsByType(
+                final ReceiveExternalFilesActivity parentActivity = (ReceiveExternalFilesActivity) getActivity();
+                parentActivity.setAccount(parentActivity.mAccountManager.getAccountsByType(
                         MainApp.getAccountType(getActivity()))[which], false);
-                parent1.onAccountSet(parent1.mAccountWasRestored);
+                parentActivity.onAccountSet(parentActivity.mAccountWasRestored);
                 dialog.dismiss();
             });
             builder.setCancelable(true);
@@ -327,7 +336,7 @@ public class ReceiveExternalFilesActivity extends FileActivity
         }
     }
 
-    public static class DialogInputUploadFilename extends DialogFragment {
+    public static class DialogInputUploadFilename extends DialogFragment implements Injectable {
         private static final String KEY_SUBJECT_TEXT = "SUBJECT_TEXT";
         private static final String KEY_EXTRA_TEXT = "EXTRA_TEXT";
 
@@ -342,7 +351,7 @@ public class ReceiveExternalFilesActivity extends FileActivity
         private int mFileCategory;
 
         private Spinner mSpinner;
-        private AppPreferences preferences;
+        @Inject AppPreferences preferences;
 
         public static DialogInputUploadFilename newInstance(String subjectText, String extraText) {
             DialogInputUploadFilename dialog = new DialogInputUploadFilename();
@@ -356,7 +365,6 @@ public class ReceiveExternalFilesActivity extends FileActivity
         @Override
         public void onAttach(Context context) {
             super.onAttach(context);
-            preferences = PreferenceManager.fromContext(context);
         }
 
         @NonNull
@@ -741,7 +749,7 @@ public class ReceiveExternalFilesActivity extends FileActivity
         boolean notRoot = mParents.size() > 1;
 
         if (actionBar != null) {
-            if ("".equals(current_dir)) {
+            if (TextUtils.isEmpty(current_dir)) {
                 ThemeUtils.setColoredTitle(actionBar, R.string.uploader_top_message, this);
             } else {
                 ThemeUtils.setColoredTitle(actionBar, current_dir, this);
@@ -761,15 +769,15 @@ public class ReceiveExternalFilesActivity extends FileActivity
 
             if (files.isEmpty()) {
                 setMessageForEmptyList(R.string.file_list_empty_headline, R.string.empty,
-                        R.drawable.ic_list_empty_upload);
+                        R.drawable.uploads);
             } else {
                 mEmptyListContainer.setVisibility(View.GONE);
 
                 files = sortFileList(files);
 
-                List<HashMap<String, Object>> data = new LinkedList<>();
+                List<Map<String, Object>> data = new LinkedList<>();
                 for (OCFile f : files) {
-                    HashMap<String, Object> h = new HashMap<>();
+                    Map<String, Object> h = new HashMap<>();
                     h.put("dirname", f);
                     data.add(h);
                 }
@@ -878,7 +886,7 @@ public class ReceiveExternalFilesActivity extends FileActivity
         String full_path = "";
 
         for (String a : dirs) {
-            full_path += a + "/";
+            full_path += a + OCFile.PATH_SEPARATOR;
         }
         return full_path;
     }
@@ -1028,10 +1036,10 @@ public class ReceiveExternalFilesActivity extends FileActivity
         if (mParents.empty()) {
             String lastPath = preferences.getLastUploadPath();
             // "/" equals root-directory
-            if ("/".equals(lastPath)) {
+            if (OCFile.ROOT_PATH.equals(lastPath)) {
                 mParents.add("");
             } else {
-                String[] dir_names = lastPath.split("/");
+                String[] dir_names = lastPath.split(OCFile.PATH_SEPARATOR);
                 mParents.clear();
                 mParents.addAll(Arrays.asList(dir_names));
             }

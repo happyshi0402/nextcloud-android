@@ -57,9 +57,10 @@ import com.bumptech.glide.request.target.Target;
 import com.caverock.androidsvg.SVG;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.snackbar.Snackbar;
+import com.nextcloud.client.account.CurrentAccountProvider;
+import com.nextcloud.client.account.UserAccountManager;
 import com.owncloud.android.MainApp;
 import com.owncloud.android.R;
-import com.owncloud.android.authentication.AccountUtils;
 import com.owncloud.android.datamodel.ArbitraryDataProvider;
 import com.owncloud.android.datamodel.OCFile;
 import com.owncloud.android.datamodel.ThumbnailsCacheManager;
@@ -71,6 +72,7 @@ import com.owncloud.android.ui.activity.FileDisplayActivity;
 import com.owncloud.android.ui.events.MenuItemClickEvent;
 import com.owncloud.android.ui.events.SearchEvent;
 import com.owncloud.android.ui.fragment.OCFileListFragment;
+import com.owncloud.android.utils.glide.CustomGlideUriLoader;
 import com.owncloud.android.utils.svg.SvgDecoder;
 import com.owncloud.android.utils.svg.SvgDrawableTranscoder;
 
@@ -85,6 +87,7 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.math.BigDecimal;
 import java.net.IDN;
+import java.nio.charset.Charset;
 import java.text.DateFormat;
 import java.util.Collection;
 import java.util.Date;
@@ -460,7 +463,7 @@ public final class DisplayUtils {
     public static void setAvatar(@NonNull Account account, @NonNull String userId, AvatarGenerationListener listener,
                                  float avatarRadius, Resources resources, Object callContext, Context context) {
         if (callContext instanceof View) {
-            ((View) callContext).setContentDescription(account.name);
+            ((View) callContext).setContentDescription(String.valueOf(account.hashCode()));
         }
 
         ArbitraryDataProvider arbitraryDataProvider = new ArbitraryDataProvider(context.getContentResolver());
@@ -496,11 +499,16 @@ public final class DisplayUtils {
         }
     }
 
-    public static void downloadIcon(Context context, String iconUrl, SimpleTarget imageView, int placeholder,
-                                    int width, int height) {
+    public static void downloadIcon(CurrentAccountProvider currentAccountProvider,
+                                    Context context,
+                                    String iconUrl,
+                                    SimpleTarget imageView,
+                                    int placeholder,
+                                    int width,
+                                    int height) {
         try {
             if (iconUrl.endsWith(".svg")) {
-                downloadSVGIcon(context, iconUrl, imageView, placeholder, width, height);
+                downloadSVGIcon(currentAccountProvider, context, iconUrl, imageView, placeholder, width, height);
             } else {
                 downloadPNGIcon(context, iconUrl, imageView, placeholder);
             }
@@ -520,10 +528,15 @@ public final class DisplayUtils {
                 .into(imageView);
     }
 
-    private static void downloadSVGIcon(Context context, String iconUrl, SimpleTarget imageView, int placeholder,
-                                        int width, int height) {
+    private static void downloadSVGIcon(CurrentAccountProvider currentAccountProvider,
+                                        Context context,
+                                        String iconUrl,
+                                        SimpleTarget imageView,
+                                        int placeholder,
+                                        int width,
+                                        int height) {
         GenericRequestBuilder<Uri, InputStream, SVG, PictureDrawable> requestBuilder = Glide.with(context)
-                .using(Glide.buildStreamModelLoader(Uri.class, context), InputStream.class)
+            .using(new CustomGlideUriLoader(currentAccountProvider), InputStream.class)
                 .from(Uri.class)
                 .as(SVG.class)
                 .transcode(new SvgDrawableTranscoder(), PictureDrawable.class)
@@ -557,13 +570,18 @@ public final class DisplayUtils {
         }
     }
 
-    public static void setupBottomBar(BottomNavigationView view, Resources resources, final Activity activity,
-                                      int checkedMenuItem) {
+    public static void setupBottomBar(
+        Account account,
+        BottomNavigationView view,
+        Resources resources,
+        UserAccountManager accountManager,
+        final Activity activity,
+        int checkedMenuItem
+    ) {
 
         Menu menu = view.getMenu();
 
-        Account account = AccountUtils.getCurrentOwnCloudAccount(MainApp.getAppContext());
-        boolean searchSupported = AccountUtils.hasSearchSupport(account);
+        boolean searchSupported = accountManager.isSearchSupported(account);
 
         if (!searchSupported) {
             menu.removeItem(R.id.nav_bar_favorites);
@@ -645,7 +663,7 @@ public final class DisplayUtils {
      */
     public static String getData(InputStream inputStream) {
 
-        BufferedReader buffreader = new BufferedReader(new InputStreamReader(inputStream));
+        BufferedReader buffreader = new BufferedReader(new InputStreamReader(inputStream, Charset.defaultCharset()));
         String line;
         StringBuilder text = new StringBuilder();
         try {
@@ -765,9 +783,9 @@ public final class DisplayUtils {
         return (int) (dp * ((float) metrics.densityDpi / DisplayMetrics.DENSITY_DEFAULT));
     }
 
-    static public void showServerOutdatedSnackbar(Activity activity) {
+    static public void showServerOutdatedSnackbar(Activity activity, int length) {
         Snackbar.make(activity.findViewById(android.R.id.content),
-                R.string.outdated_server, Snackbar.LENGTH_INDEFINITE)
+                      R.string.outdated_server, length)
                 .setAction(R.string.dismiss, v -> {
                 })
                 .show();

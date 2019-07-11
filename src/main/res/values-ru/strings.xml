@@ -3,15 +3,12 @@
     <string name="about_android">%1$s для Android</string>
     <string name="about_title">О программе</string>
     <string name="about_version">версия %1$s</string>
-    <string name="account_creation_failed">Сбой при создании аккаунта</string>
+    <string name="account_creation_failed">Ошибка создания учетной записи</string>
     <string name="account_icon">Значок учётной записи</string>
     <string name="account_not_found">Учётная запись не найдена!</string>
     <string name="action_clear_failed_uploads">Убрать неудавшиеся</string>
-    <string name="action_clear_successful_uploads">Убрать успешные</string>
     <string name="action_empty_notifications">Удалить все уведомления</string>
     <string name="action_empty_trashbin">Очистить корзину</string>
-    <string name="action_force_rescan">Перепроверить список</string>
-    <string name="action_retry_uploads">Повторить неудавшиеся</string>
     <string name="action_send_share">Отправить / Открыть доступ</string>
     <string name="action_switch_grid_view">Вид сеткой</string>
     <string name="action_switch_list_view">Вид списком</string>
@@ -22,6 +19,7 @@
     <string name="actionbar_mkdir">Создать папку</string>
     <string name="actionbar_move">Переместить</string>
     <string name="actionbar_open_as_richdocument">Открыть при помощи Collabora</string>
+    <string name="actionbar_open_as_richdocument_parameter">Открыть с помощью %1$s</string>
     <string name="actionbar_open_with">Открыть с помощью</string>
     <string name="actionbar_search">Поиск</string>
     <string name="actionbar_see_details">Подробности</string>
@@ -36,6 +34,7 @@
     <string name="activity_chooser_title">Отправить ссылку…</string>
     <string name="activity_icon">События</string>
     <string name="add_to_cloud">Добавить в %1$s</string>
+    <string name="associated_account_not_found">Связанный аккаунт не найден!</string>
     <string name="auth_access_failed">Доступ запрещен: %1$s</string>
     <string name="auth_account_does_not_exist">Учётная запись ещё не создана на этом устройстве</string>
     <string name="auth_account_not_new">Аккаунт такого пользователя и сервера уже существует на устройстве</string>
@@ -147,9 +146,12 @@
     <string name="copy_file_invalid_into_descendent">Невозможно копирование каталога в его подкаталог</string>
     <string name="copy_file_invalid_overwrite">Файл уже существует в каталоге назначения</string>
     <string name="copy_file_not_found">Не удалось произвести копирование. Проверьте что файл существует</string>
+    <string name="copy_internal_link">Копировать внутреннюю ссылку</string>
+    <string name="copy_internal_link_subline">Работает только для пользователей с доступом к этой папке</string>
     <string name="copy_link">Копировать ссылку</string>
     <string name="copy_move_to_encrypted_folder_not_supported">Копирование и перемещение в зашифрованные папки пока не поддерживается.</string>
     <string name="copy_to">Копировать…</string>
+    <string name="could_not_retrieve_url">Не удалось получить URL-адрес</string>
     <string name="create_dir_fail_msg">Не удалось создать каталог</string>
     <string name="create_file_from_template">Создание файла на основе шаблона…</string>
     <string name="create_new_document">Создать документ</string>
@@ -227,6 +229,7 @@
     <string name="error__upload__local_file_not_copied">%1$s невозможно скопировать в локальный каталог %2$s </string>
     <string name="error_cant_bind_to_operations_service">Критическая ошибка: невозможно выполнить действия</string>
     <string name="error_comment_file">Ошибка комментирования файла</string>
+    <string name="error_retrieving_file">Ошибка при получении файла</string>
     <string name="error_retrieving_templates">Ошибка получения шаблона</string>
     <string name="error_starting_direct_camera_upload">Не удалось открыть камеру</string>
     <string name="fab_label">Добавить или выгрузить</string>
@@ -410,6 +413,7 @@
     <string name="oauth_check_onoff">Войти через OAuth 2.0</string>
     <string name="oauth_login_connection">Подключение к серверу OAuth 2.0…</string>
     <string name="offline_mode">Отсутствует подключение к Интернет</string>
+    <string name="operation_canceled">Операция отменена</string>
     <string name="outdated_server">Версия сервера Nextcloud  более не поддерживается, требуется её обновление.</string>
     <string name="overflow_menu">Дополнительное меню</string>
     <string name="participate_beta_headline">Протестируйте разрабатываемую версию</string>
@@ -477,9 +481,11 @@
     <string name="prefs_instant_upload_path_use_subfolders_summary">Будут созданы папки года и вложенные в них папки номеров месяцев</string>
     <string name="prefs_instant_upload_path_use_subfolders_title">Создавать вложенные папки</string>
     <string name="prefs_license">Лицензия</string>
+    <string name="prefs_lock">Код приложения</string>
     <string name="prefs_lock_device_credentials_enabled">Системная защитная блокировка включена</string>
     <string name="prefs_lock_device_credentials_not_setup">Системная защитная блокировка не настроена.</string>
     <string name="prefs_lock_none">Не использовать</string>
+    <string name="prefs_lock_title">Защита входа в приложение</string>
     <string name="prefs_lock_using_device_credentials">Системная защитная блокировка</string>
     <string name="prefs_lock_using_passcode">Блокировка кодом</string>
     <string name="prefs_log_delete_history_button">Удалить историю</string>
@@ -508,6 +514,7 @@
     <string name="rename_dialog_title">Введите новое имя</string>
     <string name="rename_local_fail_msg">Невозможно переименовать локальную копию, попробуйте другое имя</string>
     <string name="rename_server_fail_msg">Переименование невозможно, имя занято</string>
+    <string name="reshare_not_allowed">Повторное открытие доступа запрещено</string>
     <string name="resharing_is_not_allowed">Повторное открытие доступа запрещено</string>
     <string name="resized_image_not_possible">Отсутствует оптимизированное изображение.</string>
     <string name="resized_image_not_possible_download">Оптимизированное изображение отсутствует. Скачать изображение исходного размера?</string>
@@ -545,6 +552,7 @@
     <string name="share_link_file_error">При попытке поделиться этим файлом или каталогом произошла ошибка</string>
     <string name="share_link_file_no_exist">Невозможно поделиться. Убедитесь, что файл существует</string>
     <string name="share_link_forbidden_permissions">для открытия общего доступа к этому файлу</string>
+    <string name="share_link_optional_password_title">Введите дополнительный пароль</string>
     <string name="share_link_password_title">Введите пароль</string>
     <string name="share_no_expiration_date_label">Установить срок действия</string>
     <string name="share_no_password_title">Задать пароль</string>
@@ -573,9 +581,11 @@
     <string name="share_with_edit_title">Настройки доступа для %1$s</string>
     <string name="share_with_title">Поделиться…</string>
     <string name="share_with_user_section_title">Общий доступ пользователям и группам</string>
+    <string name="shared_avatar_desc">Аватар от общего пользователя</string>
     <string name="shared_icon_share">общий ресурс</string>
     <string name="shared_icon_shared">поделился</string>
     <string name="shared_icon_shared_via_link">поступ по ссылке</string>
+    <string name="shared_with_you_by">С вами поделился %1$s</string>
     <string name="sharee_add_failed">Не удалось открыть общий доступ</string>
     <string name="signup_with_provider">Подключиться через поставщика услуги</string>
     <string name="single_sign_on_request_token" formatted="true">Разрешить %1$s получить доступ к вашей учетной записи Nextcloud %2$s?</string>
@@ -616,13 +626,10 @@
     <string name="storage_description_default">По умолчанию</string>
     <string name="storage_documents">Документы</string>
     <string name="storage_downloads">Загрузки</string>
+    <string name="storage_internal_storage">Внутреннее хранилище</string>
     <string name="storage_movies">Фильмы</string>
     <string name="storage_music">Музыка</string>
     <string name="storage_pictures">Изображения</string>
-    <string name="store_full_desc">Приложение Nextcloud для Android, распространяемое под свободной копилефт лицензией, позволяет получать доступ к файлам на своём сервере Nextcloud с мобильных устройств.\n\nВозможности: \n* Легкий современный интерфейс\n* Передача файлов на сервер Nextcloud\n* Возможность делиться своими файлами с другими\n* Синхронизация файлов и папок\n* Поиск по всем папкам на сервере\n* Автоматическая передача на сервер видео и фотографий, сделанных на мобильном устройстве\n* Поддержка нескольких учётных записей\n* Защита доступа к данным отпечатком пальца или ПИН-кодом\n* Интеграция с DAVx5 (ранее называвшемся DAVdroid) для лёгкой настройки синхронизации календарей и контактов\n\nЗамечания и ошибки: https://github.com/nextcloud/android/issues \nПомощь и обсуждение: https://help.nextcloud.com\n\nНе знакомы с Nextcloud? Nextcloud — это свободное серверное ПО для хранения и совместной работы с файлами, событиями календаря, контактами, документами и пр. с открытым исходным кодом. Вы можете самостоятельно развернуть сервер или поручить компании сделать это для вас. Таким образом, только вы управляете своими фотографиями, своими календарями и записными книжками, своими документами и всем остальным.\n\nПознакомьтесь с Nextcloud на https://nextcloud.com</string>
-    <string name="store_full_dev_desc">Приложение с открытым исходным кодом Nextcloud для Android позволяет получать доступ ко всем вашим файлам на сервере Nextcloud с мобильных устройств.\n Это разрабатываемая версия официального приложения Nextcloud, содержащая новые возможности, тестирование которых не ещё завершено. Разрабатываемая версия может быть нестабильна и её использование может привести к потере данных. Это приложение предназначено для пользователей, которые хотят познакомиться с новыми возможности и сообщать об обнаруженных ошибках. Не используйте его для работы!\n\nРазрабатываемая версия может быть установлена совместно с официальным приложением Nextcloud, которое также доступно в F-Droid.</string>
-    <string name="store_short_desc">Приложение Nextcloud для Android позволяет получать доступ к содержимому своего сервера Nextcloud с мобильных устройств.</string>
-    <string name="store_short_dev_desc">Разрабатываемая версия Nextcloud может быть установлена совместно с обычной.</string>
     <string name="stream">Потоковое вещание…</string>
     <string name="stream_not_possible_headline">Встроенное потоковое вещание невозможно</string>
     <string name="stream_not_possible_message">Скачайте файл или используйте внешнее приложение.</string>
@@ -717,7 +724,6 @@
     <string name="uploader_upload_in_progress_content">%1$d%% «%2$s»</string>
     <string name="uploader_upload_in_progress_ticker">Передача…</string>
     <string name="uploader_upload_succeeded_content_single">Передача файла «%1$s» завершена</string>
-    <string name="uploader_upload_succeeded_ticker">Успешная передача на сервер</string>
     <string name="uploader_wrn_no_account_quit_btn_text">Выход</string>
     <string name="uploader_wrn_no_account_setup_btn_text">Настройка</string>
     <string name="uploader_wrn_no_account_text">На вашем устройстве нет аккаунтов %1$s, выполните настройку аккаунта.</string>
@@ -762,6 +768,18 @@
     <string name="whats_new_device_credentials_title">Использовать системные средства защиты</string>
     <string name="whats_new_skip">Пропустить</string>
     <string name="whats_new_title">Новое в %1$s</string>
+    <plurals name="sync_fail_in_favourites_content">
+        <item quantity="one">Не удалось синхронизировать %1$d файл (конфликтов: %2$d)</item>
+        <item quantity="few">Не удалось синхронизировать %1$d файлов (конфликтов: %2$d)</item>
+        <item quantity="many">Не удалось синхронизировать %1$d файлов (конфликтов: %2$d)</item>
+        <item quantity="other">Не удалось синхронизировать %1$d файлов (конфликтов: %2$d)</item>
+    </plurals>
+    <plurals name="sync_foreign_files_forgotten_content">
+        <item quantity="one">Не удалось скопировать %1$d файл из папки %2$s в</item>
+        <item quantity="few">Не удалось скопировать %1$d файлов из папки %2$s в</item>
+        <item quantity="many">Не удалось скопировать %1$d файлов из папки %2$s в</item>
+        <item quantity="other">Не удалось скопировать %1$d файлов из папки %2$s в</item>
+    </plurals>
     <plurals name="file_list__footer__folder">
         <item quantity="one">%1$d каталог</item>
         <item quantity="few">%1$d каталога</item>

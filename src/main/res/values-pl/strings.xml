@@ -1,17 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
   <resources>
-    <string name="about_android">%1$s na Androida</string>
+    <string name="about_android">%1$s na Android</string>
     <string name="about_title">O aplikacji</string>
     <string name="about_version">wersja %1$s</string>
+    <string name="about_version_with_build">wersja %1$s, kompilacja #%2$s</string>
     <string name="account_creation_failed">Błąd tworzenia konta</string>
     <string name="account_icon">Ikona konta</string>
     <string name="account_not_found">Nie znaleziono konta</string>
     <string name="action_clear_failed_uploads">Wyczyść nieudane wysyłanie</string>
-    <string name="action_clear_successful_uploads">Wyczyść udane wysyłanie</string>
     <string name="action_empty_notifications">Wyczyść wszystkie powiadomienia</string>
     <string name="action_empty_trashbin">Opróżnij kosz</string>
-    <string name="action_force_rescan">Wymuś indeksowanie</string>
-    <string name="action_retry_uploads">Ponów nieudane wysyłanie</string>
     <string name="action_send_share">Wyślij/Udostępnij</string>
     <string name="action_switch_grid_view">Widok siatki</string>
     <string name="action_switch_list_view">Widok listy</string>
@@ -22,6 +20,7 @@
     <string name="actionbar_mkdir">Nowy katalog</string>
     <string name="actionbar_move">Przenieś</string>
     <string name="actionbar_open_as_richdocument">Otwórz z Collabora</string>
+    <string name="actionbar_open_as_richdocument_parameter">Otwórz za pomocą %1$s</string>
     <string name="actionbar_open_with">Otwórz za pomocą</string>
     <string name="actionbar_search">Wyszukaj</string>
     <string name="actionbar_see_details">Szczegóły</string>
@@ -36,6 +35,7 @@
     <string name="activity_chooser_title">Wyślij link do…</string>
     <string name="activity_icon">Aktywność</string>
     <string name="add_to_cloud">Dodaj do %1$s</string>
+    <string name="associated_account_not_found">Nie znaleziono powiązanego konta!</string>
     <string name="auth_access_failed">Dostęp nieudany: %1$s</string>
     <string name="auth_account_does_not_exist">Konto nie jest jeszcze dodane na tym urządzeniu</string>
     <string name="auth_account_not_new">Konto tego samego użytkownika i serwera już istnieje na tym urządzeniu</string>
@@ -84,6 +84,7 @@
     <string name="auto_upload_path">/AutoUpload</string>
     <string name="autoupload_create_new_custom_folder">Stwórz nowy własny katalog</string>
     <string name="autoupload_custom_folder">Ustaw własny katalog</string>
+    <string name="autoupload_disable_power_save_check">Wyłącz kontrolę oszczędzania energii</string>
     <string name="avatar">Awatar</string>
     <string name="battery_optimization_close">Zamknij</string>
     <string name="battery_optimization_disable">Wyłącz</string>
@@ -147,9 +148,12 @@
     <string name="copy_file_invalid_into_descendent">Nie można skopiować katalogu do jednego z jego podkatalogów</string>
     <string name="copy_file_invalid_overwrite">Plik już istnieje w katalogu docelowym</string>
     <string name="copy_file_not_found">Nie można skopiować. Sprawdź, czy plik istnieje</string>
+    <string name="copy_internal_link">Skopiuj link wewnętrzny</string>
+    <string name="copy_internal_link_subline">Działa tylko dla użytkowników mających dostęp do tego katalogu</string>
     <string name="copy_link">Skopiuj link</string>
     <string name="copy_move_to_encrypted_folder_not_supported">Kopiuj/przenieś do zaszyfrowanego katalogu, który nie jest obecnie obsługiwany.</string>
     <string name="copy_to">Skopiuj do…</string>
+    <string name="could_not_retrieve_url">Nie można pobrać adresu URL</string>
     <string name="create_dir_fail_msg">Nie udało się utworzyć katalogu</string>
     <string name="create_file_from_template">Tworzenie pliku z szablonu…</string>
     <string name="create_new_document">Stwórz nowy dokument</string>
@@ -227,9 +231,11 @@
     <string name="error__upload__local_file_not_copied">%1$s nie może zostać skopiowany do lokalnego katalogu %2$s</string>
     <string name="error_cant_bind_to_operations_service">Błąd krytyczny: Nie można wykonać operacji</string>
     <string name="error_comment_file">Błąd przy komentowaniu pliku</string>
+    <string name="error_retrieving_file">Błąd podczas pobierania pliku</string>
     <string name="error_retrieving_templates">Błąd podczas pobierania szablonów</string>
     <string name="error_starting_direct_camera_upload">Błąd podczas uruchamiania kamery</string>
     <string name="fab_label">Dodaj lub wyślij</string>
+    <string name="failed_to_download">Nie udało się przekazać pliku do menedżera pobierania</string>
     <string name="fallback_weblogin_back">Wróć</string>
     <string name="fallback_weblogin_text">Przywróć starą metodę logowania</string>
     <string name="favorite">Dodaj do ulubionych</string>
@@ -450,6 +456,8 @@
     <string name="placeholder_media_time">12:23:45</string>
     <string name="placeholder_sentence">Tekst zastępczy</string>
     <string name="placeholder_timestamp">2012/05/18 12:23 PM</string>
+    <string name="power_check_dialog_title">Wyłącz kontrolę oszczędzania energii</string>
+    <string name="power_save_check_dialog_message">Wyłączenie kontroli oszczędzania energii może spowodować przesłanie plików w stanie niskiego poziomu naładowania baterii!</string>
     <string name="pref_behaviour_entries_delete_file">usunięty</string>
     <string name="pref_behaviour_entries_keep_file">zachowany w oryginalnym katalogu</string>
     <string name="pref_behaviour_entries_move">przeniesiony do katalogu aplikacji</string>
@@ -517,6 +525,7 @@
     <string name="resized_image_not_possible_download">Brak obrazu o zmienionym rozmiarze. Pobrać pełny obraz?</string>
     <string name="restore">Przywróć plik</string>
     <string name="restore_button_description">Przywróć usunięty plik</string>
+    <string name="retrieving_file">Pobieranie pliku…</string>
     <string name="richdocuments_failed_to_load_document">Nie udało się pobrać dokumentu</string>
     <string name="saml_authentication_required_text">Wymagane hasło</string>
     <string name="saml_authentication_wrong_pass">Złe hasło</string>
@@ -549,6 +558,7 @@
     <string name="share_link_file_error">Wystąpił błąd podczas udostępniania tego pliku lub katalogu</string>
     <string name="share_link_file_no_exist">Nie można udostępnić. Sprawdź, czy plik istnieje</string>
     <string name="share_link_forbidden_permissions">do udostępniania tego pliku</string>
+    <string name="share_link_optional_password_title">Wprowadź opcjonalne hasło</string>
     <string name="share_link_password_title">Wprowadź hasło</string>
     <string name="share_no_expiration_date_label">Ustaw datę wygaśnięcia</string>
     <string name="share_no_password_title">Ustaw hasło</string>
@@ -626,11 +636,10 @@
     <string name="storage_movies">Filmy</string>
     <string name="storage_music">Muzyka</string>
     <string name="storage_pictures">Obrazy</string>
-    <string name="store_full_desc">Rozpowszechniana bez ograniczeń aplikacja Nextcloud na Androida, zapewniająca mobilną swobodę.\n\nFunkcje:\n* Łatwy, nowoczesny interfejs, dostosowany do motywu serwera\n* Wysyłanie plików na serwer Nextcloud\n* Udostępnianie ich innym użytkownikom\n* Synchronizacja ulubionych plików i katalogów\n* Przeszukiwanie wszystkich katalogów na serwerze\n* Automatyczne wysyłanie na serwer zdjęć i filmów\n* Otrzymywanie na bieżąco powiadomień\n* Obsługa wielu kont\n* Bezpieczny dostęp do danych za pomocą odcisku palca lub PIN\n* Integracja z DAVx5 (dawniej DAVdroid) dla łatwiejszej konfiguracji kalendarza &amp; i synchronizacji kontaktów\n\nWszelkie problemy z aplikacją proszę zgłaszać na Nextcloud https://github.com/nextcloud/android/issues, jeśli chcesz porozmawiać na jej temat odwiedź https://help.nextcloud.com/c/clients/android\n\nNie znasz jeszcze Nextcloud? Nextcloud to prywatny serwer do synchronizacji udostępnianych plików &amp; oraz komunikacji. Jest darmowym oprogramowaniem, które możesz hostować samodzielnie lub zapłacić firmie, która zrobi to za Ciebie. Dzięki temu posiadasz pełną kontrolę nad swoimi zdjęciami, kalendarzem, kontaktami, dokumentami i pozostałymi poufnymi danymi.\n\nSprawdź Nextcloud na https://nextcloud.com</string>
-    <string name="store_full_dev_desc">Aplikacja Nextcloud na Android jest wolnym oprogramowaniem na licencji copyleft, co zapewnia pełną mobilną wolność.\nTo jest oficjalna wersja rozwojowa (development version), w której można zapoznać się z codzienną porcją nowych i nieprzetestowanych funkcji, co może powodować niestabilne działanie i utratę danych. Ta aplikacja jest dla osób, które chcą ją testować i zgłaszać ewentualne błędy. Nie używaj tej aplikacji do pracy produkcyjnej!\n\nW serwisie F-droid dostępna jest zarówno wersja deweloperska, jak i zwykła wersja tej aplikacji i można zainstalować obie z nich równocześnie.</string>
-    <string name="store_short_desc">Aplikacja Nextcloud dla Androida zapewnia mobilny dostęp do plików na serwerze.</string>
-    <string name="store_short_dev_desc">
-Aplikacja Nextcloud Dev jest wersją developerską i można ją zainstalować równolegle.</string>
+    <string name="store_full_desc">Samo-hostująca platforma produkcyjna, która zapewnia kontrolę.\n\nFunkcje:\n* Łatwy, nowoczesny interfejs, dostosowany do wyglądu Twojego serwera\n* Wysyłanie plików na serwer Nextcloud\n* Udostępnianie ich innym\n* Synchronizacja ulubionych plików i katalogów\n* Przeszukiwanie wszystkich katalogów na serwerze\n* Automatyczne przesyłanie zdjęć i filmów zrobionych przez urządzenie\n* Otrzymywanie na bieżąco powiadomień\n* Obsługa wielu kont\n* Bezpieczny dostęp do danych za pomocą odcisku palca lub kodu PIN\n* Integracja z DAVx5 (wcześniej znany jako DAVdroid) dla łatwej konfiguracji kalendarza &amp; Synchronizacja kontaktów\n\nZgłoś wszystkie problemy na https://github.com/nextcloud/android/issues i omów tę aplikację na https://help.nextcloud.com/c/clients/android\n\nNie znasz jeszcze Nextcloud? Nextcloud to prywatny serwer do synchronizacji plików &amp; i komunikacji. Jest darmowym oprogramowaniem, które możesz hostować samodzielnie lub zapłacić firmie, która zrobi to za Ciebie. Dzięki temu posiadasz pełną kontrolę nad swoimi zdjęciami, kalendarzem, kontaktami, dokumentami i nad wszystkim innym.\n\nSprawdź Nextcloud na https://nextcloud.com</string>
+    <string name="store_full_dev_desc">Samo-hostująca platforma produkcyjna, która zapewnia kontrolę.\nJest to oficjalna wersja deweloperska, zawierająca codzienną próbkę każdej nowej niesprawdzonej funkcji, która może powodować niestabilność i utratę danych. Aplikacja jest przeznaczona dla użytkowników chcących przetestować i zgłosić błędy w przypadku ich wystąpienia. Nie używaj jej do ciągłej pracy!\n\nZarówno oficjalna wersja dev jak i zwykła są dostępne na F-droid i mogą być instalowane równocześnie.</string>
+    <string name="store_short_desc">Samo-hostująca platforma produkcyjna, która zapewnia kontrolę</string>
+    <string name="store_short_dev_desc">Samo-hostująca platforma produkcyjna, która zapewnia kontrolę (wersja deweloperska)</string>
     <string name="stream">Przesyłaj strumieniowo...</string>
     <string name="stream_not_possible_headline">Wewnętrzne przesyłanie strumieniowe nie jest możliwe</string>
     <string name="stream_not_possible_message">Pobierz plik lub użyj zewnętrznej aplikacji.</string>
@@ -725,7 +734,6 @@ Aplikacja Nextcloud Dev jest wersją developerską i można ją zainstalować r�
     <string name="uploader_upload_in_progress_content">%1$d%% Wysyłanie %2$s</string>
     <string name="uploader_upload_in_progress_ticker">Wysyłanie…</string>
     <string name="uploader_upload_succeeded_content_single">Wysłano %1$s</string>
-    <string name="uploader_upload_succeeded_ticker">Wysłano</string>
     <string name="uploader_wrn_no_account_quit_btn_text">Wyjdź</string>
     <string name="uploader_wrn_no_account_setup_btn_text">Ustawienia</string>
     <string name="uploader_wrn_no_account_text">Brak %1$s kont na Twoim urządzeniu. Załóż konto.</string>

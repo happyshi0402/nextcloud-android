@@ -34,7 +34,6 @@ import android.widget.TextView;
 import com.nextcloud.client.preferences.AppPreferences;
 import com.owncloud.android.R;
 import com.owncloud.android.datamodel.ThumbnailsCacheManager;
-import com.nextcloud.client.preferences.PreferenceManager;
 import com.owncloud.android.lib.common.utils.Log_OC;
 import com.owncloud.android.ui.interfaces.LocalFileListFragmentInterface;
 import com.owncloud.android.utils.DisplayUtils;
@@ -129,7 +128,7 @@ public class LocalFileListAdapter extends RecyclerView.Adapter<RecyclerView.View
 
         Log_OC.d(TAG, "Returning " + result.size() + " selected files");
 
-        return result.toArray(new String[result.size()]);
+        return result.toArray(new String[0]);
     }
 
     @Override

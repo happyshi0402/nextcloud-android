@@ -1,5 +1,36 @@
-## 3.5.1 (March, 18, 2019)
+## 3.6.2 (May, 23, 2019)
+- fix bug when creating preview
+- fix crash on opening app
+- fix account switch
+- fix jumping to top on sync
 
+For a full list, please see https://github.com/nextcloud/android/milestone/34
+
+## 3.6.1 (May, 12, 2019)
+- show reshares correctly
+- allow open files from Talk
+- collabora: hide loading delay warning if document is loaded
+- correctly show idn string in drawer
+- show outdated warning on NC13
+- enhance pass protection system
+- bugfixes
+
+For a full list, please see https://github.com/nextcloud/android/milestone/33
+
+## 3.6.0 (April, 09, 2019)
+- remove "expert mode"
+- show warning if server is unavailable
+- delete notification on server
+- actions in notifications
+- add storage path chooser for local file picker
+- show shared user
+- show notes on sharing
+- min supported server is NC12
+- warn on outdated server: <=NC14
+
+For a full list, please see https://github.com/nextcloud/android/milestone/30
+
+## 3.5.1 (March, 18, 2019)
 - fixed SSO dialog
 - abort sync on no connection
 - fix chunked upload
@@ -10,9 +41,7 @@
 
 For a full list, please see https://github.com/nextcloud/android/milestone/31
 
-
 ## 3.5.0 (February, 13, 2019)
-
 - Chunked upload: 1MB on mobile data, 10MB on Wi-Fi
 - Switch to Material Design
 - Option to not show notifications for new media folders

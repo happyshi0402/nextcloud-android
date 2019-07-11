@@ -22,7 +22,14 @@ package com.nextcloud.client.di;
 
 import android.app.Application;
 
+import com.nextcloud.client.appinfo.AppInfoModule;
+import com.nextcloud.client.device.DeviceModule;
+import com.nextcloud.client.network.NetworkModule;
+import com.nextcloud.client.onboarding.OnboardingModule;
+import com.nextcloud.client.preferences.PreferencesModule;
 import com.owncloud.android.MainApp;
+
+import javax.inject.Singleton;
 
 import dagger.BindsInstance;
 import dagger.Component;
@@ -30,8 +37,14 @@ import dagger.android.support.AndroidSupportInjectionModule;
 
 @Component(modules = {
     AndroidSupportInjectionModule.class,
-    AppModule.class
+    AppModule.class,
+    PreferencesModule.class,
+    AppInfoModule.class,
+    NetworkModule.class,
+    DeviceModule.class,
+    OnboardingModule.class
 })
+@Singleton
 public interface AppComponent {
     void inject(MainApp app);
 

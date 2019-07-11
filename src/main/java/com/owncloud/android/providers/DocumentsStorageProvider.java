@@ -2,7 +2,9 @@
  *   Nextcloud Android client application
  *
  *   @author Bartosz Przybylski
+ *   @author Chris Narkiewicz
  *   Copyright (C) 2016  Bartosz Przybylski <bart.p.pl@gmail.com>
+ *   Copyright (C) 2019 Chris Narkiewicz <hello@ezaquarii.com>
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License version 2,
@@ -28,7 +30,6 @@ import android.annotation.TargetApi;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.content.res.AssetFileDescriptor;
 import android.database.Cursor;
 import android.graphics.Point;
@@ -38,17 +39,18 @@ import android.os.CancellationSignal;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.ParcelFileDescriptor;
-import android.preference.PreferenceManager;
 import android.provider.DocumentsProvider;
 import android.util.Log;
 import android.widget.Toast;
 
 import com.evernote.android.job.JobRequest;
 import com.evernote.android.job.util.Device;
+import com.nextcloud.client.account.UserAccountManager;
+import com.nextcloud.client.account.UserAccountManagerImpl;
 import com.nextcloud.client.preferences.AppPreferences;
+import com.nextcloud.client.preferences.AppPreferencesImpl;
 import com.owncloud.android.MainApp;
 import com.owncloud.android.R;
-import com.owncloud.android.authentication.AccountUtils;
 import com.owncloud.android.datamodel.FileDataStorageManager;
 import com.owncloud.android.datamodel.OCFile;
 import com.owncloud.android.datamodel.ThumbnailsCacheManager;
@@ -83,6 +85,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static com.owncloud.android.datamodel.OCFile.PATH_SEPARATOR;
+import static com.owncloud.android.datamodel.OCFile.ROOT_PATH;
+
 @TargetApi(Build.VERSION_CODES.KITKAT)
 public class DocumentsStorageProvider extends DocumentsProvider {
 
@@ -92,10 +97,12 @@ public class DocumentsStorageProvider extends DocumentsProvider {
     private Map<Long, FileDataStorageManager> rootIdToStorageManager;
     private OwnCloudClient client;
 
+    UserAccountManager accountManager;
+
     @Override
     public Cursor queryRoots(String[] projection) throws FileNotFoundException {
         Context context = MainApp.getAppContext();
-        AppPreferences preferences = com.nextcloud.client.preferences.PreferenceManager.fromContext(context);
+        AppPreferences preferences = AppPreferencesImpl.fromContext(context);
         if (SettingsActivity.LOCK_PASSCODE.equals(preferences.getLockPreference()) ||
             SettingsActivity.LOCK_DEVICE_CREDENTIALS.equals(preferences.getLockPreference())) {
             return new FileCursor();
@@ -105,7 +112,7 @@ public class DocumentsStorageProvider extends DocumentsProvider {
 
         final RootCursor result = new RootCursor(projection);
 
-        for (Account account : AccountUtils.getAccounts(getContext())) {
+        for (Account account : accountManager.getAccounts()) {
             result.addRoot(account, getContext());
         }
 
@@ -289,6 +296,7 @@ public class DocumentsStorageProvider extends DocumentsProvider {
 
     @Override
     public boolean onCreate() {
+        accountManager = UserAccountManagerImpl.fromContext(getContext());
         return true;
     }
 
@@ -385,7 +393,7 @@ public class DocumentsStorageProvider extends DocumentsProvider {
         String newPath = targetFolder.getRemotePath() + file.getFileName();
 
         if (file.isFolder()) {
-            newPath = newPath + "/";
+            newPath = newPath + PATH_SEPARATOR;
         }
         OCFile newFile = currentStorageManager.getFileByPath(newPath);
 
@@ -427,7 +435,7 @@ public class DocumentsStorageProvider extends DocumentsProvider {
     public Cursor querySearchDocuments(String rootId, String query, String[] projection) {
         updateCurrentStorageManagerIfNeeded(rootId);
 
-        OCFile root = currentStorageManager.getFileByPath("/");
+        OCFile root = currentStorageManager.getFileByPath(ROOT_PATH);
         FileCursor result = new FileCursor(projection);
 
         for (OCFile f : findFiles(root, query)) {
@@ -458,7 +466,7 @@ public class DocumentsStorageProvider extends DocumentsProvider {
     private String createFolder(OCFile parent, String displayName, String documentId) throws FileNotFoundException {
 
         CreateFolderOperation createFolderOperation = new CreateFolderOperation(parent.getRemotePath() + displayName
-                                                                                    + "/", true);
+                                                                                    + PATH_SEPARATOR, true);
         RemoteOperationResult result = createFolderOperation.execute(client, currentStorageManager);
 
 
@@ -468,7 +476,7 @@ public class DocumentsStorageProvider extends DocumentsProvider {
         }
 
 
-        String newDirPath = parent.getRemotePath() + displayName + "/";
+        String newDirPath = parent.getRemotePath() + displayName + PATH_SEPARATOR;
         OCFile newFolder = currentStorageManager.getFileByPath(newDirPath);
 
         return String.valueOf(newFolder.getFileId());
@@ -578,19 +586,19 @@ public class DocumentsStorageProvider extends DocumentsProvider {
     @SuppressLint("UseSparseArrays")
     private void initiateStorageMap() throws FileNotFoundException {
 
-        rootIdToStorageManager = new HashMap<>();
-
         Context context = getContext();
+
+        final Account[] allAccounts = accountManager.getAccounts();
+        rootIdToStorageManager = new HashMap<>(allAccounts.length);
 
         if (context == null) {
             throw new FileNotFoundException("Context may not be null!");
         }
 
-        ContentResolver contentResolver = context.getContentResolver();
-
-        for (Account account : AccountUtils.getAccounts(getContext())) {
+        final ContentResolver contentResolver = context.getContentResolver();
+        for (Account account : allAccounts) {
             final FileDataStorageManager storageManager = new FileDataStorageManager(account, contentResolver);
-            final OCFile rootDir = storageManager.getFileByPath("/");
+            final OCFile rootDir = storageManager.getFileByPath(ROOT_PATH);
             rootIdToStorageManager.put(rootDir.getFileId(), storageManager);
         }
     }

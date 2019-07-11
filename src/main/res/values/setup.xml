@@ -16,9 +16,7 @@
     <string name="db_file">nextcloud.db</string>
     <string name="db_name">nextcloud</string>
     <string name="data_folder">nextcloud</string>
-    <string name="log_name">nextcloud</string>
     <string name="default_display_name_for_root_folder">Nextcloud</string>
-    <string name="user_agent">Mozilla/5.0 (Android) ownCloud-android/%1$s</string>
     <string name="nextcloud_user_agent">Mozilla/5.0 (Android) Nextcloud-android/%1$s</string>
 
     <!-- URLs and flags related -->
@@ -29,10 +27,6 @@
     <string name="server_input_type">regular</string>
     <bool name="show_provider_or_own_installation">true</bool>
     <string name="provider_registration_server">https://www.nextcloud.com/register</string>
-
-    <!-- Flags to setup the authentication methods available in the app -->
-    <string name="auth_method_oauth2">off</string>
-    <string name="auth_method_saml_web_sso">off</string>
 
     <!-- Flags to enable/disable some features -->
     <string name="send_files_to_other_apps">on</string>
@@ -150,6 +144,8 @@
     <string name="dev_link">https://download.nextcloud.com/android/dev/nextcloud-dev-</string>
     <string name="dev_latest">https://download.nextcloud.com/android/dev/latest</string>
     <string name="dev_changelog">https://github.com/nextcloud/android/raw/dev/CHANGELOG.md</string>
+
+    <string name="buildNumber" translatable="false"></string>
 </resources>
 
 

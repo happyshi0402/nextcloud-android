@@ -28,7 +28,7 @@ import android.view.Window;
 import android.view.WindowManager;
 
 import com.nextcloud.client.preferences.AppPreferences;
-import com.nextcloud.client.preferences.PreferenceManager;
+import com.nextcloud.client.preferences.AppPreferencesImpl;
 import com.owncloud.android.MainApp;
 import com.owncloud.android.ui.activity.PassCodeActivity;
 import com.owncloud.android.ui.activity.RequestCredentialsActivity;
@@ -76,40 +76,51 @@ public final class PassCodeManager {
         }
     }
 
-    public void onActivityStarted(Activity activity) {
-        Long timestamp = PreferenceManager.fromContext(activity).getLockTimestamp();
+    public boolean onActivityStarted(Activity activity) {
+        boolean askedForPin = false;
+        Long timestamp = AppPreferencesImpl.fromContext(activity).getLockTimestamp();
+
         if (!exemptOfPasscodeActivities.contains(activity.getClass()) && passCodeShouldBeRequested(timestamp)) {
+            askedForPin = true;
+
+            preferences.setLockTimestamp(0);
 
             Intent i = new Intent(MainApp.getAppContext(), PassCodeActivity.class);
             i.setAction(PassCodeActivity.ACTION_CHECK);
-            i.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
+            i.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
             activity.startActivityForResult(i, PASSCODE_ACTIVITY);
         }
 
         if (!exemptOfPasscodeActivities.contains(activity.getClass()) &&
             Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && deviceCredentialsShouldBeRequested(timestamp, activity)) {
+            askedForPin = true;
+
+            preferences.setLockTimestamp(0);
+
             Intent i = new Intent(MainApp.getAppContext(), RequestCredentialsActivity.class);
-            i.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
+            i.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
             activity.startActivityForResult(i, PASSCODE_ACTIVITY);
+        } else {
+            if (!askedForPin && preferences.getLockTimestamp() != 0) {
+                preferences.setLockTimestamp(System.currentTimeMillis());
+            }
         }
 
         visibleActivitiesCounter++;    // keep it AFTER passCodeShouldBeRequested was checked
+
+        return askedForPin;
     }
 
     public void onActivityStopped(Activity activity) {
         if (visibleActivitiesCounter > 0) {
             visibleActivitiesCounter--;
         }
-        setUnlockTimestamp(activity);
+
         PowerManager powerMgr = (PowerManager) activity.getSystemService(Context.POWER_SERVICE);
         if ((isPassCodeEnabled() || deviceCredentialsAreEnabled(activity)) && powerMgr != null
                 && !powerMgr.isScreenOn()) {
             activity.moveTaskToBack(true);
         }
-    }
-
-    private void setUnlockTimestamp(Activity activity) {
-        PreferenceManager.fromContext(activity).setLockTimestamp(System.currentTimeMillis());
     }
 
     private boolean passCodeShouldBeRequested(Long timestamp) {

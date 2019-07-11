@@ -3,9 +3,11 @@
  *
  * @author Mario Danic
  * @author Andy Scherzinger
+ * @author Chris Narkiewicz
  * Copyright (C) 2017 Mario Danic
  * Copyright (C) 2017 Andy Scherzinger
  * Copyright (C) 2017 Nextcloud GmbH.
+ * Copyright (C) 2019 Chris Narkiewicz <hello@ezaquarii.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -51,17 +53,16 @@ import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.animation.GlideAnimation;
 import com.bumptech.glide.request.target.SimpleTarget;
 import com.google.gson.Gson;
+import com.nextcloud.client.di.Injectable;
 import com.nextcloud.client.preferences.AppPreferences;
-import com.nextcloud.client.preferences.PreferenceManager;
 import com.owncloud.android.R;
-import com.owncloud.android.authentication.AccountUtils;
 import com.owncloud.android.datamodel.ArbitraryDataProvider;
 import com.owncloud.android.datamodel.PushConfigurationState;
 import com.owncloud.android.lib.common.UserInfo;
 import com.owncloud.android.lib.common.operations.RemoteOperation;
 import com.owncloud.android.lib.common.operations.RemoteOperationResult;
 import com.owncloud.android.lib.common.utils.Log_OC;
-import com.owncloud.android.lib.resources.users.GetRemoteUserInfoOperation;
+import com.owncloud.android.lib.resources.users.GetUserInfoRemoteOperation;
 import com.owncloud.android.ui.events.TokenPushEvent;
 import com.owncloud.android.utils.DisplayUtils;
 import com.owncloud.android.utils.PushUtils;
@@ -74,6 +75,8 @@ import org.parceler.Parcels;
 
 import java.util.LinkedList;
 import java.util.List;
+
+import javax.inject.Inject;
 
 import androidx.annotation.ColorInt;
 import androidx.annotation.DrawableRes;
@@ -92,7 +95,7 @@ import butterknife.Unbinder;
 /**
  * This Activity presents the user information.
  */
-public class UserInfoActivity extends FileActivity {
+public class UserInfoActivity extends FileActivity implements Injectable {
     public static final String KEY_ACCOUNT = "ACCOUNT";
 
     private static final String TAG = UserInfoActivity.class.getSimpleName();
@@ -114,7 +117,7 @@ public class UserInfoActivity extends FileActivity {
 
     @BindString(R.string.user_information_retrieval_error) protected String sorryMessage;
 
-    private AppPreferences preferences;
+    @Inject AppPreferences preferences;
     private float mCurrentAccountAvatarRadiusDimension;
 
     private Unbinder unbinder;
@@ -126,7 +129,6 @@ public class UserInfoActivity extends FileActivity {
     public void onCreate(Bundle savedInstanceState) {
         Log_OC.v(TAG, "onCreate() start");
         super.onCreate(savedInstanceState);
-        preferences = PreferenceManager.fromContext(this);
         Bundle bundle = getIntent().getExtras();
 
         account = Parcels.unwrap(bundle.getParcelable(KEY_ACCOUNT));
@@ -140,7 +142,7 @@ public class UserInfoActivity extends FileActivity {
         setContentView(R.layout.user_info_layout);
         unbinder = ButterKnife.bind(this);
 
-        setAccount(AccountUtils.getCurrentOwnCloudAccount(this));
+        setAccount(getUserAccountManager().getCurrentAccount());
         onAccountSet(false);
 
         boolean useBackgroundImage = URLUtil.isValidUrl(
@@ -275,7 +277,7 @@ public class UserInfoActivity extends FileActivity {
                 && userInfo.getTwitter() == null && userInfo.getWebsite() == null) {
 
             setErrorMessageForMultiList(getString(R.string.userinfo_no_info_headline),
-                    getString(R.string.userinfo_no_info_text), R.drawable.ic_user);
+                getString(R.string.userinfo_no_info_text), R.drawable.ic_user);
         } else {
             emptyContentContainer.setVisibility(View.GONE);
             userInfoView.setVisibility(View.VISIBLE);
@@ -413,7 +415,7 @@ public class UserInfoActivity extends FileActivity {
 
     private void fetchAndSetData() {
         Thread t = new Thread(() -> {
-            RemoteOperation getRemoteUserInfoOperation = new GetRemoteUserInfoOperation();
+            RemoteOperation getRemoteUserInfoOperation = new GetUserInfoRemoteOperation();
             RemoteOperationResult result = getRemoteUserInfoOperation.execute(account, this);
 
             if (result.isSuccess() && result.getData() != null) {
@@ -442,7 +444,7 @@ public class UserInfoActivity extends FileActivity {
 
     @Subscribe(threadMode = ThreadMode.BACKGROUND)
     public void onMessageEvent(TokenPushEvent event) {
-        PushUtils.pushRegistrationToServer(preferences.getPushToken());
+        PushUtils.pushRegistrationToServer(getUserAccountManager(), preferences.getPushToken());
     }
 
 

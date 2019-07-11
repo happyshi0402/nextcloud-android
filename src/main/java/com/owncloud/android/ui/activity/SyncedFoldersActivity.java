@@ -42,11 +42,11 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import com.google.android.material.bottomnavigation.BottomNavigationView;
-import com.nextcloud.client.preferences.PreferenceManager;
+import com.nextcloud.client.di.Injectable;
+import com.nextcloud.client.preferences.AppPreferences;
 import com.owncloud.android.BuildConfig;
 import com.owncloud.android.MainApp;
 import com.owncloud.android.R;
-import com.owncloud.android.authentication.AccountUtils;
 import com.owncloud.android.datamodel.ArbitraryDataProvider;
 import com.owncloud.android.datamodel.MediaFolder;
 import com.owncloud.android.datamodel.MediaFolderType;
@@ -76,6 +76,8 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
+import javax.inject.Inject;
+
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AlertDialog;
@@ -92,7 +94,7 @@ import static com.owncloud.android.datamodel.SyncedFolderDisplayItem.UNPERSISTED
  * Activity displaying all auto-synced folders and/or instant upload media folders.
  */
 public class SyncedFoldersActivity extends FileActivity implements SyncedFolderAdapter.ClickListener,
-        SyncedFolderPreferencesDialogFragment.OnSyncedFolderPreferenceListener {
+        SyncedFolderPreferencesDialogFragment.OnSyncedFolderPreferenceListener, Injectable {
 
     private static final String[] PRIORITIZED_FOLDERS = new String[]{"Camera", "Screenshots"};
     private static final List<String> SPECIAL_MANUFACTURER = Arrays.asList("Samsung", "Huawei", "Xiaomi");
@@ -110,6 +112,7 @@ public class SyncedFoldersActivity extends FileActivity implements SyncedFolderA
 
     private String path;
     private int type;
+    @Inject AppPreferences preferences;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -128,8 +131,8 @@ public class SyncedFoldersActivity extends FileActivity implements SyncedFolderA
             currentAccount = getAccount();
 
             if (account != null && currentAccount != null && !account.equalsIgnoreCase(currentAccount.name)) {
-                AccountUtils.setCurrentOwnCloudAccount(getApplicationContext(), account);
-                setAccount(AccountUtils.getCurrentOwnCloudAccount(this));
+                accountManager.setCurrentOwnCloudAccount(account);
+                setAccount(getUserAccountManager().getCurrentAccount());
             }
 
             path = getIntent().getStringExtra(MediaFoldersDetectionJob.KEY_MEDIA_FOLDER_PATH);
@@ -188,8 +191,7 @@ public class SyncedFoldersActivity extends FileActivity implements SyncedFolderA
         final int gridWidth = getResources().getInteger(R.integer.media_grid_width);
         boolean lightVersion = getResources().getBoolean(R.bool.syncedFolder_light);
         mAdapter = new SyncedFolderAdapter(this, gridWidth, this, lightVersion);
-        mSyncedFolderProvider = new SyncedFolderProvider(getContentResolver(),
-            PreferenceManager.fromContext(this));
+        mSyncedFolderProvider = new SyncedFolderProvider(getContentResolver(), preferences);
 
         final GridLayoutManager lm = new GridLayoutManager(this, gridWidth);
         mAdapter.setLayoutManager(lm);
@@ -202,7 +204,14 @@ public class SyncedFoldersActivity extends FileActivity implements SyncedFolderA
 
         if (getResources().getBoolean(R.bool.bottom_toolbar_enabled)) {
             bottomNavigationView.setVisibility(View.VISIBLE);
-            DisplayUtils.setupBottomBar(bottomNavigationView, getResources(), this, -1);
+            DisplayUtils.setupBottomBar(
+                getUserAccountManager().getCurrentAccount(),
+                bottomNavigationView,
+                getResources(),
+                accountManager,
+                this,
+                -1
+            );
         }
 
         load(gridWidth * 2, false);
@@ -225,7 +234,7 @@ public class SyncedFoldersActivity extends FileActivity implements SyncedFolderA
 
         List<SyncedFolder> syncedFolderArrayList = mSyncedFolderProvider.getSyncedFolders();
         List<SyncedFolder> currentAccountSyncedFoldersList = new ArrayList<>();
-        Account currentAccount = AccountUtils.getCurrentOwnCloudAccount(this);
+        Account currentAccount = getUserAccountManager().getCurrentAccount();
         for (SyncedFolder syncedFolder : syncedFolderArrayList) {
             if (currentAccount != null && syncedFolder.getAccount().equals(currentAccount.name)) {
 
@@ -570,7 +579,7 @@ public class SyncedFoldersActivity extends FileActivity implements SyncedFolderA
 
         // custom folders newly created aren't in the list already,
         // so triggering a refresh
-        if (MediaFolderType.CUSTOM.equals(syncedFolder.getType()) && syncedFolder.getId() == UNPERSISTED_ID) {
+        if (MediaFolderType.CUSTOM == syncedFolder.getType() && syncedFolder.getId() == UNPERSISTED_ID) {
             SyncedFolderDisplayItem newCustomFolder = new SyncedFolderDisplayItem(
                     SyncedFolder.UNPERSISTED_ID, syncedFolder.getLocalPath(), syncedFolder.getRemotePath(),
                     syncedFolder.getWifiOnly(), syncedFolder.getChargingOnly(), syncedFolder.getSubfolderByDate(),

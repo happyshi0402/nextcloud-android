@@ -30,9 +30,11 @@ import com.owncloud.android.lib.common.OwnCloudCredentials;
 import com.owncloud.android.lib.common.network.RedirectionPath;
 import com.owncloud.android.lib.common.operations.RemoteOperationResult;
 import com.owncloud.android.lib.resources.files.ExistenceCheckRemoteOperation;
-import com.owncloud.android.lib.resources.users.GetRemoteUserInfoOperation;
+import com.owncloud.android.lib.resources.users.GetUserInfoRemoteOperation;
 
 import java.lang.ref.WeakReference;
+
+import static com.owncloud.android.datamodel.OCFile.ROOT_PATH;
 
 
 /**
@@ -40,7 +42,6 @@ import java.lang.ref.WeakReference;
  */
 public class AuthenticatorAsyncTask  extends AsyncTask<Object, Void, RemoteOperationResult> {
 
-    private static final String REMOTE_PATH = "/";
     private static final boolean SUCCESS_IF_ABSENT = false;
 
     private WeakReference<Context> mWeakContext;
@@ -66,7 +67,7 @@ public class AuthenticatorAsyncTask  extends AsyncTask<Object, Void, RemoteOpera
             client.setCredentials(credentials);
 
             // Operation - try credentials
-            ExistenceCheckRemoteOperation operation = new ExistenceCheckRemoteOperation(REMOTE_PATH, SUCCESS_IF_ABSENT);
+            ExistenceCheckRemoteOperation operation = new ExistenceCheckRemoteOperation(ROOT_PATH, SUCCESS_IF_ABSENT);
             result = operation.execute(client);
 
             if (operation.wasRedirected()) {
@@ -77,7 +78,7 @@ public class AuthenticatorAsyncTask  extends AsyncTask<Object, Void, RemoteOpera
 
             // Operation - get display name
             if (result.isSuccess()) {
-                GetRemoteUserInfoOperation remoteUserNameOperation = new GetRemoteUserInfoOperation();
+                GetUserInfoRemoteOperation remoteUserNameOperation = new GetUserInfoRemoteOperation();
                 result = remoteUserNameOperation.execute(client);
             }
 

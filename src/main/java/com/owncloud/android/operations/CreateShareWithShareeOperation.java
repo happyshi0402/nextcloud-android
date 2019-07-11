@@ -26,7 +26,7 @@ import com.owncloud.android.datamodel.OCFile;
 import com.owncloud.android.lib.common.OwnCloudClient;
 import com.owncloud.android.lib.common.operations.RemoteOperationResult;
 import com.owncloud.android.lib.resources.files.FileUtils;
-import com.owncloud.android.lib.resources.shares.CreateRemoteShareOperation;
+import com.owncloud.android.lib.resources.shares.CreateShareRemoteOperation;
 import com.owncloud.android.lib.resources.shares.OCShare;
 import com.owncloud.android.lib.resources.shares.ShareType;
 import com.owncloud.android.operations.common.SyncOperation;
@@ -41,8 +41,6 @@ import lombok.Getter;
  * Creates a new private share for a given file.
  */
 public class CreateShareWithShareeOperation extends SyncOperation {
-
-    protected FileDataStorageManager mStorageManager;
 
     @Getter private String path;
     private String shareeName;
@@ -75,7 +73,7 @@ public class CreateShareWithShareeOperation extends SyncOperation {
     @Override
     protected RemoteOperationResult run(OwnCloudClient client) {
 
-        CreateRemoteShareOperation operation = new CreateRemoteShareOperation(
+        CreateShareRemoteOperation operation = new CreateShareRemoteOperation(
             path,
             shareType,
             shareeName,

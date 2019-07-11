@@ -2,8 +2,11 @@
  * Nextcloud Android client application
  *
  * @author Tobias Kaminsky
+ * @author Chris Narkiewicz
+ *
  * Copyright (C) 2017 Tobias Kaminsky
  * Copyright (C) 2017 Nextcloud GmbH.
+ * Copyright (C) 2019 Chris Narkiewicz <hello@ezaquarii.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -29,9 +32,9 @@ import android.content.Context;
 
 import com.evernote.android.job.Job;
 import com.evernote.android.job.util.support.PersistableBundleCompat;
-import com.nextcloud.client.preferences.PreferenceManager;
+import com.nextcloud.client.account.UserAccountManager;
+import com.nextcloud.client.preferences.AppPreferencesImpl;
 import com.owncloud.android.MainApp;
-import com.owncloud.android.authentication.AccountUtils;
 import com.owncloud.android.datamodel.ArbitraryDataProvider;
 import com.owncloud.android.datamodel.FileDataStorageManager;
 import com.owncloud.android.datamodel.FilesystemDataProvider;
@@ -63,12 +66,20 @@ public class AccountRemovalJob extends Job implements AccountManagerCallback<Boo
     public static final String TAG = "AccountRemovalJob";
     public static final String ACCOUNT = "account";
 
+    private UploadsStorageManager uploadsStorageManager;
+    private UserAccountManager accountManager;
+
+    public AccountRemovalJob(UploadsStorageManager uploadStorageManager, UserAccountManager accountManager) {
+        this.uploadsStorageManager = uploadStorageManager;
+        this.accountManager = accountManager;
+    }
+
     @NonNull
     @Override
     protected Result onRunJob(Params params) {
         Context context = MainApp.getAppContext();
         PersistableBundleCompat bundle = params.getExtras();
-        Account account = AccountUtils.getOwnCloudAccountByName(context, bundle.getString(ACCOUNT, ""));
+        Account account = accountManager.getAccountByName(bundle.getString(ACCOUNT, ""));
         AccountManager am = (AccountManager) context.getSystemService(ACCOUNT_SERVICE);
 
         if (account != null && am != null) {
@@ -94,7 +105,7 @@ public class AccountRemovalJob extends Job implements AccountManagerCallback<Boo
 
             // remove synced folders set for account
             SyncedFolderProvider syncedFolderProvider = new SyncedFolderProvider(context.getContentResolver(),
-                PreferenceManager.fromContext(context));
+                                                                                 AppPreferencesImpl.fromContext(context));
             List<SyncedFolder> syncedFolders = syncedFolderProvider.getSyncedFolders();
 
             List<Long> syncedFolderIds = new ArrayList<>();
@@ -109,8 +120,6 @@ public class AccountRemovalJob extends Job implements AccountManagerCallback<Boo
 
             syncedFolderProvider.deleteSyncFoldersForAccount(account);
 
-            UploadsStorageManager uploadsStorageManager = new UploadsStorageManager(context.getContentResolver(),
-                    context);
             uploadsStorageManager.removeAccountUploads(account);
 
             FilesystemDataProvider filesystemDataProvider = new FilesystemDataProvider(context.getContentResolver());

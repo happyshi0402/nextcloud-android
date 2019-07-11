@@ -30,8 +30,10 @@ import android.graphics.Color;
 import android.graphics.PorterDuff;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
-import android.text.Html;
+import android.text.Spannable;
+import android.text.SpannableString;
 import android.text.Spanned;
+import android.text.style.ForegroundColorSpan;
 import android.view.View;
 import android.view.Window;
 import android.widget.EditText;
@@ -44,9 +46,9 @@ import com.google.android.material.button.MaterialButton;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.android.material.textfield.TextInputLayout;
+import com.nextcloud.client.account.UserAccountManagerImpl;
 import com.owncloud.android.MainApp;
 import com.owncloud.android.R;
-import com.owncloud.android.authentication.AccountUtils;
 import com.owncloud.android.datamodel.FileDataStorageManager;
 import com.owncloud.android.lib.common.utils.Log_OC;
 import com.owncloud.android.lib.resources.status.OCCapability;
@@ -78,6 +80,7 @@ public final class ThemeUtils {
 
     private static final int INDEX_LUMINATION = 2;
     private static final double MAX_LIGHTNESS = 0.92;
+    public static final double LUMINATION_THRESHOLD = 0.8;
 
     private ThemeUtils() {
         // utility class -> private constructor
@@ -157,7 +160,7 @@ public final class ThemeUtils {
 
             float[] hsl = colorToHSL(primaryColor);
 
-            if (hsl[INDEX_LUMINATION] > 0.8) {
+            if (hsl[INDEX_LUMINATION] > LUMINATION_THRESHOLD) {
                 return context.getResources().getColor(R.color.elementFallbackColor);
             } else {
                 return primaryColor;
@@ -218,15 +221,24 @@ public final class ThemeUtils {
             if (android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.KITKAT) {
                 actionBar.setTitle(title);
             } else {
-                String colorHex = colorToHexString(fontColor(context));
-                actionBar.setTitle(Html.fromHtml("<font color='" + colorHex + "'>" + title + "</font>"));
+                Spannable text = new SpannableString(title);
+                text.setSpan(new ForegroundColorSpan(fontColor(context)),
+                             0,
+                             text.length(),
+                             Spannable.SPAN_INCLUSIVE_INCLUSIVE);
+                actionBar.setTitle(text);
             }
         }
     }
 
     public static Spanned getColoredTitle(String title, int color) {
-        String colorHex = colorToHexString(color);
-        return Html.fromHtml("<font color='" + colorHex + "'>" + title + "</font>");
+        Spannable text = new SpannableString(title);
+        text.setSpan(new ForegroundColorSpan(color),
+                     0,
+                     text.length(),
+                     Spannable.SPAN_INCLUSIVE_INCLUSIVE);
+
+        return text;
     }
 
     /**
@@ -240,9 +252,13 @@ public final class ThemeUtils {
             if (android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.KITKAT) {
                 actionBar.setTitle(titleId);
             } else {
-                String colorHex = colorToHexString(fontColor(context));
                 String title = context.getString(titleId);
-                actionBar.setTitle(Html.fromHtml("<font color='" + colorHex + "'>" + title + "</font>"));
+                Spannable text = new SpannableString(title);
+                text.setSpan(new ForegroundColorSpan(fontColor(context)),
+                             0,
+                             text.length(),
+                             Spannable.SPAN_INCLUSIVE_INCLUSIVE);
+                actionBar.setTitle(text);
             }
         }
     }
@@ -421,7 +437,9 @@ public final class ThemeUtils {
     }
 
     public static void themeDialogActionButton(MaterialButton button) {
-        if (button == null ) return;
+        if (button == null ) {
+            return;
+        }
 
         Context context = button.getContext();
         int accentColor = ThemeUtils.primaryAccentColor(button.getContext());
@@ -541,7 +559,8 @@ public final class ThemeUtils {
         if (acc != null) {
             account = acc;
         } else if (context != null) {
-            account = AccountUtils.getCurrentOwnCloudAccount(context);
+            // TODO: refactor when dark theme work is completed
+            account = UserAccountManagerImpl.fromContext(context).getCurrentAccount();
         }
 
         if (account != null) {

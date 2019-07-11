@@ -34,12 +34,12 @@ import android.os.Looper;
 import android.provider.BaseColumns;
 import android.widget.Toast;
 
+import com.nextcloud.client.account.UserAccountManager;
 import com.owncloud.android.R;
-import com.owncloud.android.authentication.AccountUtils;
 import com.owncloud.android.datamodel.FileDataStorageManager;
 import com.owncloud.android.lib.common.operations.RemoteOperationResult;
 import com.owncloud.android.lib.common.utils.Log_OC;
-import com.owncloud.android.lib.resources.shares.GetRemoteShareesOperation;
+import com.owncloud.android.lib.resources.shares.GetShareesRemoteOperation;
 import com.owncloud.android.lib.resources.shares.ShareType;
 import com.owncloud.android.utils.ErrorMessageAdapter;
 
@@ -53,8 +53,11 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
+import javax.inject.Inject;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import dagger.android.AndroidInjection;
 
 
 /**
@@ -89,11 +92,18 @@ public class UsersAndGroupsSearchProvider extends ContentProvider {
 
     private UriMatcher mUriMatcher;
 
+    @Inject
+    protected UserAccountManager accountManager;
+
     private static Map<String, ShareType> sShareTypes = new HashMap<>();
 
     public static ShareType getShareType(String authority) {
 
         return sShareTypes.get(authority);
+    }
+
+    private static void setActionShareWith(@NonNull Context context) {
+        ACTION_SHARE_WITH = context.getResources().getString(R.string.users_and_groups_share_with);
     }
 
     @Nullable
@@ -105,12 +115,14 @@ public class UsersAndGroupsSearchProvider extends ContentProvider {
 
     @Override
     public boolean onCreate() {
+        AndroidInjection.inject(this);
+
         if (getContext() == null) {
             return false;
         }
 
         String AUTHORITY = getContext().getResources().getString(R.string.users_and_groups_search_authority);
-        ACTION_SHARE_WITH = getContext().getResources().getString(R.string.users_and_groups_share_with);
+        setActionShareWith(getContext());
         DATA_USER = AUTHORITY + ".data.user";
         DATA_GROUP = AUTHORITY + ".data.group";
         DATA_ROOM = AUTHORITY + ".data.room";
@@ -160,8 +172,6 @@ public class UsersAndGroupsSearchProvider extends ContentProvider {
     }
 
     private Cursor searchForUsersOrGroups(Uri uri) {
-        MatrixCursor response = null;
-
         String lastPathSegment = uri.getLastPathSegment();
 
         if (lastPathSegment == null) {
@@ -170,7 +180,7 @@ public class UsersAndGroupsSearchProvider extends ContentProvider {
 
         // need to trust on the AccountUtils to get the current account since the query in the client side is not
         // directly started by our code, but from SearchView implementation
-        Account account = AccountUtils.getCurrentOwnCloudAccount(getContext());
+        Account account = accountManager.getCurrentAccount();
 
         if (account == null) {
             throw new IllegalArgumentException("Account may not be null!");
@@ -179,7 +189,7 @@ public class UsersAndGroupsSearchProvider extends ContentProvider {
         String userQuery = lastPathSegment.toLowerCase(Locale.ROOT);
 
         // request to the OC server about users and groups matching userQuery
-        GetRemoteShareesOperation searchRequest = new GetRemoteShareesOperation(userQuery, REQUESTED_PAGE,
+        GetShareesRemoteOperation searchRequest = new GetShareesRemoteOperation(userQuery, REQUESTED_PAGE,
                                                                                 RESULTS_PER_PAGE);
         RemoteOperationResult result = searchRequest.execute(account, getContext());
         List<JSONObject> names = new ArrayList<>();
@@ -192,19 +202,14 @@ public class UsersAndGroupsSearchProvider extends ContentProvider {
             showErrorMessage(result);
         }
 
+        MatrixCursor response = null;
         // convert the responses from the OC server to the expected format
         if (names.size() > 0) {
-            response = new MatrixCursor(COLUMNS);
-            Iterator<JSONObject> namesIt = names.iterator();
-            JSONObject item;
-            String displayName;
-            int icon = 0;
-            Uri dataUri;
-            int count = 0;
-
             if (getContext() == null) {
                 throw new IllegalArgumentException("Context may not be null!");
             }
+
+            response = new MatrixCursor(COLUMNS);
 
             Uri userBaseUri = new Uri.Builder().scheme(CONTENT).authority(DATA_USER).build();
             Uri groupBaseUri = new Uri.Builder().scheme(CONTENT).authority(DATA_GROUP).build();
@@ -217,14 +222,20 @@ public class UsersAndGroupsSearchProvider extends ContentProvider {
                 .isTrue();
 
             try {
+                Iterator<JSONObject> namesIt = names.iterator();
+                JSONObject item;
+                String displayName;
+                int icon = 0;
+                Uri dataUri;
+                int count = 0;
                 while (namesIt.hasNext()) {
                     item = namesIt.next();
                     dataUri = null;
                     displayName = null;
-                    String userName = item.getString(GetRemoteShareesOperation.PROPERTY_LABEL);
-                    JSONObject value = item.getJSONObject(GetRemoteShareesOperation.NODE_VALUE);
-                    ShareType type = ShareType.fromValue(value.getInt(GetRemoteShareesOperation.PROPERTY_SHARE_TYPE));
-                    String shareWith = value.getString(GetRemoteShareesOperation.PROPERTY_SHARE_WITH);
+                    String userName = item.getString(GetShareesRemoteOperation.PROPERTY_LABEL);
+                    JSONObject value = item.getJSONObject(GetShareesRemoteOperation.NODE_VALUE);
+                    ShareType type = ShareType.fromValue(value.getInt(GetShareesRemoteOperation.PROPERTY_SHARE_TYPE));
+                    String shareWith = value.getString(GetShareesRemoteOperation.PROPERTY_SHARE_WITH);
 
                     switch (type) {
                         case GROUP:

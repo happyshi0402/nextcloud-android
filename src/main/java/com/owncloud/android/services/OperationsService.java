@@ -24,8 +24,6 @@ package com.owncloud.android.services;
 
 import android.accounts.Account;
 import android.accounts.AccountsException;
-import android.accounts.AuthenticatorException;
-import android.accounts.OperationCanceledException;
 import android.app.Service;
 import android.content.Intent;
 import android.net.Uri;
@@ -36,10 +34,11 @@ import android.os.IBinder;
 import android.os.Looper;
 import android.os.Message;
 import android.os.Process;
+import android.text.TextUtils;
 import android.util.Pair;
 
+import com.nextcloud.client.account.UserAccountManager;
 import com.owncloud.android.MainApp;
-import com.owncloud.android.R;
 import com.owncloud.android.datamodel.FileDataStorageManager;
 import com.owncloud.android.datamodel.OCFile;
 import com.owncloud.android.lib.common.OwnCloudAccount;
@@ -47,7 +46,6 @@ import com.owncloud.android.lib.common.OwnCloudClient;
 import com.owncloud.android.lib.common.OwnCloudClientManagerFactory;
 import com.owncloud.android.lib.common.OwnCloudCredentials;
 import com.owncloud.android.lib.common.OwnCloudCredentialsFactory;
-import com.owncloud.android.lib.common.accounts.AccountUtils.AccountNotFoundException;
 import com.owncloud.android.lib.common.operations.OnRemoteOperationListener;
 import com.owncloud.android.lib.common.operations.RemoteOperation;
 import com.owncloud.android.lib.common.operations.RemoteOperationResult;
@@ -56,7 +54,7 @@ import com.owncloud.android.lib.resources.files.RestoreFileVersionRemoteOperatio
 import com.owncloud.android.lib.resources.files.model.FileVersion;
 import com.owncloud.android.lib.resources.shares.ShareType;
 import com.owncloud.android.lib.resources.status.OwnCloudVersion;
-import com.owncloud.android.lib.resources.users.GetRemoteUserInfoOperation;
+import com.owncloud.android.lib.resources.users.GetUserInfoRemoteOperation;
 import com.owncloud.android.operations.CheckCurrentCredentialsOperation;
 import com.owncloud.android.operations.CopyFileOperation;
 import com.owncloud.android.operations.CreateFolderOperation;
@@ -64,7 +62,6 @@ import com.owncloud.android.operations.CreateShareViaLinkOperation;
 import com.owncloud.android.operations.CreateShareWithShareeOperation;
 import com.owncloud.android.operations.GetServerInfoOperation;
 import com.owncloud.android.operations.MoveFileOperation;
-import com.owncloud.android.operations.OAuth2GetAccessToken;
 import com.owncloud.android.operations.RemoveFileOperation;
 import com.owncloud.android.operations.RenameFileOperation;
 import com.owncloud.android.operations.SynchronizeFileOperation;
@@ -80,6 +77,10 @@ import java.util.Iterator;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ConcurrentMap;
+
+import javax.inject.Inject;
+
+import dagger.android.AndroidInjection;
 
 public class OperationsService extends Service {
 
@@ -106,7 +107,6 @@ public class OperationsService extends Service {
     public static final String EXTRA_SHARE_HIDE_FILE_DOWNLOAD = "HIDE_FILE_DOWNLOAD";
     public static final String EXTRA_SHARE_ID = "SHARE_ID";
     public static final String EXTRA_SHARE_NOTE = "SHARE_NOTE";
-    public static final String EXTRA_USER_ID = "USER_ID";
     public static final String EXTRA_IN_BACKGROUND = "IN_BACKGROUND";
 
     public static final String EXTRA_COOKIE = "COOKIE";
@@ -117,9 +117,7 @@ public class OperationsService extends Service {
     public static final String ACTION_UPDATE_SHARE = "UPDATE_SHARE";
     public static final String ACTION_UPDATE_SHARE_NOTE = "UPDATE_SHARE_NOTE";
     public static final String ACTION_GET_SERVER_INFO = "GET_SERVER_INFO";
-    public static final String ACTION_OAUTH2_GET_ACCESS_TOKEN = "OAUTH2_GET_ACCESS_TOKEN";
     public static final String ACTION_GET_USER_NAME = "GET_USER_NAME";
-    public static final String ACTION_GET_USER_AVATAR = "GET_USER_AVATAR";
     public static final String ACTION_RENAME = "RENAME";
     public static final String ACTION_REMOVE = "REMOVE";
     public static final String ACTION_CREATE_FOLDER = "CREATE_FOLDER";
@@ -141,6 +139,8 @@ public class OperationsService extends Service {
     private ConcurrentMap<Integer, Pair<RemoteOperation, RemoteOperationResult>>
             mUndispatchedFinishedOperations = new ConcurrentHashMap<>();
 
+    @Inject UserAccountManager accountManager;
+
     private static class Target {
         public Uri mServerUrl;
         public Account mAccount;
@@ -159,13 +159,14 @@ public class OperationsService extends Service {
     @Override
     public void onCreate() {
         super.onCreate();
+        AndroidInjection.inject(this);
         Log_OC.d(TAG, "Creating service");
 
         // First worker thread for most of operations
         HandlerThread thread = new HandlerThread("Operations thread",
                 Process.THREAD_PRIORITY_BACKGROUND);
         thread.start();
-        mOperationsHandler = new ServiceHandler(thread.getLooper(), this);
+        mOperationsHandler = new ServiceHandler(thread.getLooper(), this, accountManager);
         mOperationsBinder = new OperationsServiceBinder(mOperationsHandler);
 
         // Separated worker thread for download of folders (WIP)
@@ -220,14 +221,8 @@ public class OperationsService extends Service {
     public void onDestroy() {
         Log_OC.v(TAG, "Destroying service" );
         // Saving cookies
-        try {
-            OwnCloudClientManagerFactory.getDefaultSingleton().
-                    saveAllClients(this, MainApp.getAccountType(getApplicationContext()));
-
-            // TODO - get rid of these exceptions
-        } catch (AccountNotFoundException | IOException | OperationCanceledException | AuthenticatorException e) {
-            Log_OC.d(TAG, e.getMessage(), e);
-        }
+        OwnCloudClientManagerFactory.getDefaultSingleton()
+            .saveAllClients(this, MainApp.getAccountType(getApplicationContext()));
 
         mUndispatchedFinishedOperations.clear();
 
@@ -407,14 +402,16 @@ public class OperationsService extends Service {
         private Target mLastTarget;
         private OwnCloudClient mOwnCloudClient;
         private FileDataStorageManager mStorageManager;
+        private UserAccountManager accountManager;
 
 
-        public ServiceHandler(Looper looper, OperationsService service) {
+        public ServiceHandler(Looper looper, OperationsService service, UserAccountManager accountManager) {
             super(looper);
             if (service == null) {
                 throw new IllegalArgumentException("Received invalid NULL in parameter 'service'");
             }
             mService = service;
+            this.accountManager = accountManager;
         }
 
         @Override
@@ -449,8 +446,7 @@ public class OperationsService extends Service {
                             mOwnCloudClient = OwnCloudClientManagerFactory.getDefaultSingleton().
                                     getClientFor(ocAccount, mService);
 
-                            OwnCloudVersion version = com.owncloud.android.authentication.AccountUtils.getServerVersion(
-                                    mLastTarget.mAccount);
+                            OwnCloudVersion version = accountManager.getServerVersion(mLastTarget.mAccount);
                             mOwnCloudClient.setOwnCloudVersion(version);
 
                             mStorageManager = new FileDataStorageManager(
@@ -459,8 +455,7 @@ public class OperationsService extends Service {
                             );
                         } else {
                             OwnCloudCredentials credentials = null;
-                            if (mLastTarget.mCookie != null &&
-                                    mLastTarget.mCookie.length() > 0) {
+                            if (!TextUtils.isEmpty(mLastTarget.mCookie)) {
                                 // just used for GetUserName
                                 // TODO refactor to run GetUserName as AsyncTask in the context of
                                 // AuthenticatorActivity
@@ -562,7 +557,7 @@ public class OperationsService extends Service {
                     case ACTION_CREATE_SHARE_VIA_LINK:
                         remotePath = operationIntent.getStringExtra(EXTRA_REMOTE_PATH);
                         password = operationIntent.getStringExtra(EXTRA_SHARE_PASSWORD);
-                        if (remotePath.length() > 0) {
+                        if (!TextUtils.isEmpty(remotePath)) {
                             operation = new CreateShareViaLinkOperation(remotePath, password);
                         }
                         break;
@@ -571,7 +566,7 @@ public class OperationsService extends Service {
                         remotePath = operationIntent.getStringExtra(EXTRA_REMOTE_PATH);
                         shareId = operationIntent.getLongExtra(EXTRA_SHARE_ID, -1);
 
-                        if (remotePath != null && remotePath.length() > 0) {
+                        if (!TextUtils.isEmpty(remotePath)) {
                             UpdateShareViaLinkOperation updateLinkOperation = new UpdateShareViaLinkOperation(remotePath);
 
                             password = operationIntent.getStringExtra(EXTRA_SHARE_PASSWORD);
@@ -585,8 +580,13 @@ public class OperationsService extends Service {
                             updateLinkOperation.setHideFileDownload(hideFileDownload);
 
                             if (operationIntent.hasExtra(EXTRA_SHARE_PUBLIC_UPLOAD)) {
-                                updateLinkOperation.setPublicUpload(
+                                if (remotePath.endsWith("/")) {
+                                    updateLinkOperation.setPublicUploadOnFolder(
                                         operationIntent.getBooleanExtra(EXTRA_SHARE_PUBLIC_UPLOAD, false));
+                                } else {
+                                    updateLinkOperation.setPublicUploadOnFile(
+                                        operationIntent.getBooleanExtra(EXTRA_SHARE_PUBLIC_UPLOAD, false));
+                                }
                             }
                             operation = updateLinkOperation;
                         } else if (shareId > 0) {
@@ -620,7 +620,7 @@ public class OperationsService extends Service {
                         String shareeName = operationIntent.getStringExtra(EXTRA_SHARE_WITH);
                         shareType = (ShareType) operationIntent.getSerializableExtra(EXTRA_SHARE_TYPE);
                         int permissions = operationIntent.getIntExtra(EXTRA_SHARE_PERMISSIONS, -1);
-                        if (remotePath.length() > 0) {
+                        if (!TextUtils.isEmpty(remotePath)) {
                             operation = new CreateShareWithShareeOperation(remotePath, shareeName, shareType,
                                     permissions);
                         }
@@ -631,7 +631,7 @@ public class OperationsService extends Service {
                         shareType = (ShareType) operationIntent.getSerializableExtra(EXTRA_SHARE_TYPE);
                         String shareWith = operationIntent.getStringExtra(EXTRA_SHARE_WITH);
 
-                        if (remotePath.length() > 0) {
+                        if (!TextUtils.isEmpty(remotePath)) {
                             operation = new UnshareOperation(remotePath, shareType, shareWith, this);
                         }
                         break;
@@ -640,15 +640,8 @@ public class OperationsService extends Service {
                         operation = new GetServerInfoOperation(serverUrl, this);
                         break;
 
-                    case ACTION_OAUTH2_GET_ACCESS_TOKEN:
-                        String oauth2QueryParameters = operationIntent.getStringExtra(EXTRA_OAUTH2_QUERY_PARAMETERS);
-                        operation = new OAuth2GetAccessToken(getString(R.string.oauth2_client_id),
-                                getString(R.string.oauth2_redirect_uri), getString(R.string.oauth2_grant_type),
-                                oauth2QueryParameters);
-                        break;
-
                     case ACTION_GET_USER_NAME:
-                        operation = new GetRemoteUserInfoOperation();
+                        operation = new GetUserInfoRemoteOperation();
                         break;
 
                     case ACTION_RENAME:
@@ -707,9 +700,8 @@ public class OperationsService extends Service {
 
                     case ACTION_RESTORE_VERSION:
                         FileVersion fileVersion = operationIntent.getParcelableExtra(EXTRA_FILE_VERSION);
-                        String userId = operationIntent.getStringExtra(EXTRA_USER_ID);
                         operation = new RestoreFileVersionRemoteOperation(fileVersion.getRemoteId(),
-                                                                          fileVersion.getFileName(), userId);
+                                                                          fileVersion.getFileName());
                         break;
 
                     default:

@@ -35,7 +35,7 @@ import com.owncloud.android.lib.common.utils.Log_OC;
 import com.owncloud.android.lib.resources.files.ReadFileRemoteOperation;
 import com.owncloud.android.lib.resources.files.ReadFolderRemoteOperation;
 import com.owncloud.android.lib.resources.files.model.RemoteFile;
-import com.owncloud.android.lib.resources.shares.GetRemoteSharesForFileOperation;
+import com.owncloud.android.lib.resources.shares.GetSharesForFileRemoteOperation;
 import com.owncloud.android.lib.resources.shares.OCShare;
 import com.owncloud.android.lib.resources.shares.ShareType;
 import com.owncloud.android.syncadapter.FileSyncAdapter;
@@ -290,7 +290,7 @@ public class RefreshFolderOperation extends RemoteOperation {
         Log_OC.d(TAG, "Checking changes in " + mAccount.name + remotePath);
 
         // remote request
-        result = new ReadFileRemoteOperation(remotePath).execute(client, true);
+        result = new ReadFileRemoteOperation(remotePath).execute(client);
 
         if (result.isSuccess()) {
             OCFile remoteFolder = FileStorageUtils.fillOCFile((RemoteFile) result.getData().get(0));
@@ -332,7 +332,7 @@ public class RefreshFolderOperation extends RemoteOperation {
 
     private RemoteOperationResult fetchAndSyncRemoteFolder(OwnCloudClient client) {
         String remotePath = mLocalFolder.getRemotePath();
-        RemoteOperationResult result = new ReadFolderRemoteOperation(remotePath).execute(client, true);
+        RemoteOperationResult result = new ReadFolderRemoteOperation(remotePath).execute(client);
         Log_OC.d(TAG, "Synchronizing " + mAccount.name + remotePath);
 
         if (result.isSuccess()) {
@@ -567,8 +567,8 @@ public class RefreshFolderOperation extends RemoteOperation {
         RemoteOperationResult result;
 
         // remote request
-        GetRemoteSharesForFileOperation operation =
-                new GetRemoteSharesForFileOperation(mLocalFolder.getRemotePath(), true, true);
+        GetSharesForFileRemoteOperation operation =
+            new GetSharesForFileRemoteOperation(mLocalFolder.getRemotePath(), true, true);
         result = operation.execute(client);
 
         if (result.isSuccess()) {

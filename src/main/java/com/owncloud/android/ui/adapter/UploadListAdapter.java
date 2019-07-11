@@ -2,8 +2,10 @@
  * Nextcloud Android client application
  *
  * @author Tobias Kaminsky
+ * @author Chris Narkiewicz
  * Copyright (C) 2018 Tobias Kaminsky
  * Copyright (C) 2018 Nextcloud
+ * Copyright (C) 2019 Chris Narkiewicz <hello@ezaquarii.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU AFFERO GENERAL PUBLIC LICENSE
@@ -38,8 +40,10 @@ import android.widget.TextView;
 
 import com.afollestad.sectionedrecyclerview.SectionedRecyclerViewAdapter;
 import com.afollestad.sectionedrecyclerview.SectionedViewHolder;
+import com.nextcloud.client.account.UserAccountManager;
+import com.nextcloud.client.device.PowerManagementService;
+import com.nextcloud.client.network.ConnectivityService;
 import com.owncloud.android.R;
-import com.owncloud.android.authentication.AccountUtils;
 import com.owncloud.android.datamodel.OCFile;
 import com.owncloud.android.datamodel.ThumbnailsCacheManager;
 import com.owncloud.android.datamodel.UploadsStorageManager;
@@ -70,6 +74,9 @@ public class UploadListAdapter extends SectionedRecyclerViewAdapter<SectionedVie
     private ProgressListener progressListener;
     private FileActivity parentActivity;
     private UploadsStorageManager uploadsStorageManager;
+    private ConnectivityService connectivityService;
+    private PowerManagementService powerManagementService;
+    private UserAccountManager accountManager;
     private UploadGroup[] uploadGroups;
 
     @Override
@@ -122,7 +129,15 @@ public class UploadListAdapter extends SectionedRecyclerViewAdapter<SectionedVie
                     break;
                 case FAILED:
                     new Thread(() -> new FileUploader.UploadRequester()
-                        .retryFailedUploads(parentActivity, null, null)).start();
+                        .retryFailedUploads(
+                            parentActivity,
+                            null,
+                            uploadsStorageManager,
+                            connectivityService,
+                            accountManager,
+                            powerManagementService,
+                            null))
+                        .start();
                     break;
 
                 default:
@@ -139,11 +154,17 @@ public class UploadListAdapter extends SectionedRecyclerViewAdapter<SectionedVie
         // not needed
     }
 
-    public UploadListAdapter(FileActivity fileActivity) {
+    public UploadListAdapter(final FileActivity fileActivity,
+                             final UploadsStorageManager uploadsStorageManager,
+                             final UserAccountManager accountManager,
+                             final ConnectivityService connectivityService,
+                             final PowerManagementService powerManagementService) {
         Log_OC.d(TAG, "UploadListAdapter");
-        parentActivity = fileActivity;
-        uploadsStorageManager = new UploadsStorageManager(parentActivity.getContentResolver(),
-                                                          parentActivity.getApplicationContext());
+        this.parentActivity = fileActivity;
+        this.uploadsStorageManager = uploadsStorageManager;
+        this.accountManager = accountManager;
+        this.connectivityService = connectivityService;
+        this.powerManagementService = powerManagementService;
         uploadGroups = new UploadGroup[3];
 
         shouldShowHeadersForEmptySections(false);
@@ -207,7 +228,7 @@ public class UploadListAdapter extends SectionedRecyclerViewAdapter<SectionedVie
                                                                          DateUtils.SECOND_IN_MILLIS, DateUtils.WEEK_IN_MILLIS, 0);
         itemViewHolder.date.setText(dateString);
 
-        Account account = AccountUtils.getOwnCloudAccountByName(parentActivity, item.getAccountName());
+        Account account = accountManager.getAccountByName(item.getAccountName());
         if (account != null) {
             itemViewHolder.account.setText(DisplayUtils.getAccountNameDisplayText(parentActivity, account,
                                                                                   account.name, item.getAccountName()));
@@ -308,14 +329,14 @@ public class UploadListAdapter extends SectionedRecyclerViewAdapter<SectionedVie
             if (UploadResult.CREDENTIAL_ERROR == item.getLastResult()) {
                 itemViewHolder.itemLayout.setOnClickListener(v ->
                                                                  parentActivity.getFileOperationsHelper().checkCurrentCredentials(
-                                                                     item.getAccount(parentActivity)));
+                                                                     item.getAccount(accountManager)));
             } else {
                 // not a credentials error
                 itemViewHolder.itemLayout.setOnClickListener(v -> {
                     File file = new File(item.getLocalPath());
                     if (file.exists()) {
                         FileUploader.UploadRequester requester = new FileUploader.UploadRequester();
-                        requester.retry(parentActivity, item);
+                        requester.retry(parentActivity, accountManager, item);
                         loadUploadItemsFromDb();
                     } else {
                         DisplayUtils.showSnackMessage(

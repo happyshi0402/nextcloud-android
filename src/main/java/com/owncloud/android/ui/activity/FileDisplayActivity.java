@@ -4,9 +4,11 @@
  * @author Bartek Przybylski
  * @author David A. Velasco
  * @author Andy Scherzinger
+ * @author Chris Narkiewicz
  * Copyright (C) 2011  Bartek Przybylski
  * Copyright (C) 2016 ownCloud Inc.
  * Copyright (C) 2018 Andy Scherzinger
+ * Copyright (C) 2019 Chris Narkiewicz <hello@ezaquarii.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2,
@@ -56,15 +58,15 @@ import android.widget.ImageView;
 
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.snackbar.Snackbar;
+import com.nextcloud.client.appinfo.AppInfo;
 import com.nextcloud.client.di.Injectable;
+import com.nextcloud.client.network.ConnectivityService;
+import com.nextcloud.client.preferences.AppPreferences;
 import com.owncloud.android.MainApp;
 import com.owncloud.android.R;
-import com.owncloud.android.datamodel.ArbitraryDataProvider;
 import com.owncloud.android.datamodel.FileDataStorageManager;
 import com.owncloud.android.datamodel.OCFile;
 import com.owncloud.android.datamodel.VirtualFolderType;
-import com.nextcloud.client.preferences.AppPreferences;
-import com.nextcloud.client.preferences.PreferenceManager;
 import com.owncloud.android.files.services.FileDownloader;
 import com.owncloud.android.files.services.FileDownloader.FileDownloaderBinder;
 import com.owncloud.android.files.services.FileUploader;
@@ -97,6 +99,7 @@ import com.owncloud.android.operations.UploadFileOperation;
 import com.owncloud.android.providers.UsersAndGroupsSearchProvider;
 import com.owncloud.android.syncadapter.FileSyncAdapter;
 import com.owncloud.android.ui.asynctasks.CheckAvailableSpaceTask;
+import com.owncloud.android.ui.asynctasks.FetchRemoteFileTask;
 import com.owncloud.android.ui.dialog.SendShareDialog;
 import com.owncloud.android.ui.dialog.SortingOrderDialogFragment;
 import com.owncloud.android.ui.events.SyncEventFinished;
@@ -132,7 +135,9 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Locale;
 
+import javax.annotation.Nullable;
 import javax.inject.Inject;
 
 import androidx.annotation.NonNull;
@@ -145,11 +150,13 @@ import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
 
+import static com.owncloud.android.datamodel.OCFile.PATH_SEPARATOR;
+
 /**
  * Displays, what files the user has available in his ownCloud. This is the main view.
  */
 
-public class FileDisplayActivity extends HookActivity
+public class FileDisplayActivity extends FileActivity
         implements FileFragment.ContainerActivity,
         OnEnforceableRefreshListener, SortingOrderDialogFragment.OnSortingOrderListener,
         SendShareDialog.SendShareDialogDownloader, Injectable {
@@ -167,6 +174,7 @@ public class FileDisplayActivity extends HookActivity
 
     public static final String TAG_PUBLIC_LINK = "PUBLIC_LINK";
     public static final String FTAG_CHOOSER_DIALOG = "CHOOSER_DIALOG";
+    public static final String KEY_FILE_ID = "KEY_FILE_ID";
 
     private static final String KEY_WAITING_TO_PREVIEW = "WAITING_TO_PREVIEW";
     private static final String KEY_SYNC_IN_PROGRESS = "SYNC_IN_PROGRESS";
@@ -209,16 +217,24 @@ public class FileDisplayActivity extends HookActivity
     private boolean searchOpen;
 
     private SearchView searchView;
+
     @Inject
     AppPreferences preferences;
+
+    @Inject
+    AppInfo appInfo;
+
+    @Inject
+    ConnectivityService connectivityService;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         Log_OC.v(TAG, "onCreate() start");
+
         // Set the default theme to replace the launch screen theme.
         setTheme(R.style.Theme_ownCloud_Toolbar_Drawer);
-        super.onCreate(savedInstanceState); // this calls onAccountChanged() when ownCloud Account
-        // is valid
+
+        super.onCreate(savedInstanceState); // this calls onAccountChanged() when ownCloud Account is valid
 
         /// Load of saved instance state
         if (savedInstanceState != null) {
@@ -264,6 +280,10 @@ public class FileDisplayActivity extends HookActivity
             fm.beginTransaction()
                     .add(taskRetainerFragment, TaskRetainerFragment.FTAG_TASK_RETAINER_FRAGMENT).commit();
         }   // else, Fragment already created and retained across configuration change
+
+        if (Intent.ACTION_VIEW.equals(getIntent().getAction())) {
+            handleOpenFileViaIntent(getIntent());
+        }
     }
 
     @Override
@@ -349,24 +369,17 @@ public class FileDisplayActivity extends HookActivity
         Account account = getAccount();
 
         if (getResources().getBoolean(R.bool.show_outdated_server_warning) && account != null) {
-            ArbitraryDataProvider arbitraryDataProvider = new ArbitraryDataProvider(getContentResolver());
+            OwnCloudVersion serverVersion = AccountUtils.getServerVersionForAccount(account, this);
 
-            int lastSeenVersion = arbitraryDataProvider.getIntegerValue(account,
-                    PreferenceManager.AUTO_PREF__LAST_SEEN_VERSION_CODE);
+            if (serverVersion == null) {
+                serverVersion = getCapabilities().getVersion();
+            }
 
-            if (MainApp.getVersionCode() > lastSeenVersion) {
-                OwnCloudVersion serverVersion = AccountUtils.getServerVersionForAccount(account, this);
-
-                if (serverVersion == null) {
-                    serverVersion = getCapabilities().getVersion();
-                }
-
-                if (MainApp.OUTDATED_SERVER_VERSION.compareTo(serverVersion) >= 0) {
-                    DisplayUtils.showServerOutdatedSnackbar(this);
-                }
-
-                arbitraryDataProvider.storeOrUpdateKeyValue(account.name, PreferenceManager.AUTO_PREF__LAST_SEEN_VERSION_CODE,
-                        String.valueOf(MainApp.getVersionCode()));
+            // show outdated warning
+            if (getResources().getBoolean(R.bool.show_outdated_server_warning) &&
+                MainApp.OUTDATED_SERVER_VERSION.isSameMajorVersion(serverVersion) &&
+                getCapabilities().getExtendedSupport().isFalse()) {
+                DisplayUtils.showServerOutdatedSnackbar(this, Snackbar.LENGTH_LONG);
             }
         }
     }
@@ -494,30 +507,34 @@ public class FileDisplayActivity extends HookActivity
             /// First fragment
             OCFileListFragment listOfFiles = getListOfFilesFragment();
             if (listOfFiles != null && TextUtils.isEmpty(searchQuery)) {
-                listOfFiles.listDirectory(getCurrentDir(), MainApp.isOnlyOnDevice(), false);
+                listOfFiles.listDirectory(getCurrentDir(), getFile(), MainApp.isOnlyOnDevice(), false);
             } else {
-                Log_OC.e(TAG, "Still have a chance to lose the initializacion of list fragment >(");
+                Log_OC.e(TAG, "Still have a chance to lose the initialization of list fragment >(");
             }
 
             /// Second fragment
-            OCFile file = getFile();
+            if (mDualPane) {
+                OCFile file = getFile();
 
-            Fragment secondFragment = getSecondFragment();
-            if (secondFragment == null) {
-                secondFragment = chooseInitialSecondFragment(file);
-            }
+                Fragment secondFragment = getSecondFragment();
+                if (secondFragment == null) {
+                    secondFragment = chooseInitialSecondFragment(file);
+                }
 
-            if (secondFragment != null) {
-                setSecondFragment(secondFragment);
-                updateFragmentsVisibility(true);
-                updateActionBarTitleAndHomeButton(file);
+                if (secondFragment != null) {
+                    setSecondFragment(secondFragment);
+                    updateFragmentsVisibility(true);
+                    updateActionBarTitleAndHomeButton(file);
+                } else {
+                    cleanSecondFragment();
+                    if (file.isDown() && MimeTypeUtil.isVCard(file.getMimeType())) {
+                        startContactListFragment(file);
+                    } else if (file.isDown() && PreviewTextFragment.canBePreviewed(file)) {
+                        startTextPreview(file, false);
+                    }
+                }
             } else {
                 cleanSecondFragment();
-                if (file.isDown() && MimeTypeUtil.isVCard(file.getMimeType())) {
-                    startContactListFragment(file);
-                } else if (file.isDown() && PreviewTextFragment.canBePreviewed(file)) {
-                    startTextPreview(file, false);
-                }
             }
 
         } else {
@@ -539,6 +556,8 @@ public class FileDisplayActivity extends HookActivity
         if (ACTION_DETAILS.equalsIgnoreCase(intent.getAction())) {
             setIntent(intent);
             setFile(intent.getParcelableExtra(EXTRA_FILE));
+        } else if (Intent.ACTION_VIEW.equals(intent.getAction())) {
+            handleOpenFileViaIntent(intent);
         } else if (RESTART.equals(intent.getAction())) {
             finish();
             startActivity(intent);
@@ -566,7 +585,7 @@ public class FileDisplayActivity extends HookActivity
                 }
 
             } else {
-                Log_OC.e(TAG, "Unexpected intent " + intent.toString());
+                Log_OC.e(TAG, String.format(Locale.US, "Unexpected intent %s", intent));
             }
     }
 
@@ -661,7 +680,7 @@ public class FileDisplayActivity extends HookActivity
     }
 
 
-    private OCFileListFragment getListOfFilesFragment() {
+    public OCFileListFragment getListOfFilesFragment() {
         Fragment listOfFiles = getSupportFragmentManager().findFragmentByTag(
                 FileDisplayActivity.TAG_LIST_OF_FILES);
         if (listOfFiles != null) {
@@ -671,7 +690,8 @@ public class FileDisplayActivity extends HookActivity
         return null;
     }
 
-    public FileFragment getSecondFragment() {
+    public @Nullable
+    FileFragment getSecondFragment() {
         Fragment second = getSupportFragmentManager().findFragmentByTag(FileDisplayActivity.TAG_SECOND_FRAGMENT);
         if (second != null) {
             return (FileFragment) second;
@@ -981,7 +1001,7 @@ public class FileDisplayActivity extends HookActivity
 
                     if (hasEnoughSpaceAvailable) {
                         File file = new File(filesToUpload[0]);
-                        File renamedFile = new File(file.getParent() + "/" + FileOperationsHelper.getCapturedImageName());
+                        File renamedFile = new File(file.getParent() + PATH_SEPARATOR + FileOperationsHelper.getCapturedImageName());
 
                         if (!file.renameTo(renamedFile)) {
                             DisplayUtils.showSnackMessage(getActivity(), "Fail to upload taken image!");
@@ -1688,7 +1708,7 @@ public class FileDisplayActivity extends HookActivity
     }
 
     @Override
-    protected void updateActionBarTitleAndHomeButton(OCFile chosenFile) {
+    public void updateActionBarTitleAndHomeButton(OCFile chosenFile) {
         if (chosenFile == null) {
             chosenFile = getFile();     // if no file is passed, current file decides
         }
@@ -1966,15 +1986,17 @@ public class FileDisplayActivity extends HookActivity
             // if share to user and share via link multiple ocshares are returned,
             // therefore filtering for public_link
             String link = "";
+            OCFile file = null;
             for (Object object : result.getData()) {
                 OCShare shareLink = (OCShare) object;
                 if (TAG_PUBLIC_LINK.equalsIgnoreCase(shareLink.getShareType().name())) {
                     link = shareLink.getShareLink();
+                    file = getStorageManager().getFileByPath(shareLink.getPath());
                     break;
                 }
             }
 
-            copyAndShareFileLink(this, link);
+            copyAndShareFileLink(this, file, link);
 
             if (fileDetailFragment != null && fileDetailFragment.getFileDetailSharingFragment() != null) {
                 fileDetailFragment.getFileDetailSharingFragment().refreshPublicShareFromDB();
@@ -1985,15 +2007,18 @@ public class FileDisplayActivity extends HookActivity
             // Detect Failure (403) --> maybe needs password
             String password = operation.getPassword();
             if (result.getCode() == RemoteOperationResult.ResultCode.SHARE_FORBIDDEN    &&
-                    (password == null || password.length() == 0)                        &&
+                    TextUtils.isEmpty(password)                                         &&
                     getCapabilities().getFilesSharingPublicEnabled().isUnknown()) {
                 // Was tried without password, but not sure that it's optional.
 
                 // Try with password before giving up; see also ShareFileFragment#OnShareViaLinkListener
-                if (fileDetailFragment != null
-                        && fileDetailFragment.isAdded()) {   // only if added to the view hierarchy!!
+                if (fileDetailFragment != null && fileDetailFragment.isAdded()) { // only if added to the view hierarchy
 
-                    fileDetailFragment.getFileDetailSharingFragment().requestPasswordForShareViaLink(true);
+                    fileDetailFragment
+                        .getFileDetailSharingFragment()
+                        .requestPasswordForShareViaLink(true,
+                                                        getCapabilities().getFilesSharingPublicAskForOptionalPassword()
+                                                            .isTrue());
                 }
 
             } else {
@@ -2031,7 +2056,7 @@ public class FileDisplayActivity extends HookActivity
         if (result.isSuccess()) {
             updateFileFromDB();
             refreshListOfFilesFragment(false);
-        } else if (fileDetailFragment.getView() != null) {
+        } else if (fileDetailFragment != null && fileDetailFragment.getView() != null) {
             String errorResponse;
 
             if (result.getData() != null && result.getData().size() > 0) {
@@ -2363,7 +2388,9 @@ public class FileDisplayActivity extends HookActivity
         if (showPreview) {
             startActivity(showDetailsIntent);
         } else {
-            FileOperationsHelper fileOperationsHelper = new FileOperationsHelper(this);
+            FileOperationsHelper fileOperationsHelper = new FileOperationsHelper(this,
+                                                                                 getUserAccountManager(),
+                                                                                 connectivityService);
             fileOperationsHelper.startSyncForFileAndIntent(file, showDetailsIntent);
         }
     }
@@ -2382,7 +2409,9 @@ public class FileDisplayActivity extends HookActivity
         if (showPreview) {
             startActivity(showDetailsIntent);
         } else {
-            FileOperationsHelper fileOperationsHelper = new FileOperationsHelper(this);
+            FileOperationsHelper fileOperationsHelper = new FileOperationsHelper(this,
+                                                                                 getUserAccountManager(),
+                                                                                 connectivityService);
             fileOperationsHelper.startSyncForFileAndIntent(file, showDetailsIntent);
         }
     }
@@ -2409,7 +2438,9 @@ public class FileDisplayActivity extends HookActivity
             previewIntent.putExtra(EXTRA_FILE, file);
             previewIntent.putExtra(PreviewVideoActivity.EXTRA_START_POSITION, startPlaybackPosition);
             previewIntent.putExtra(PreviewVideoActivity.EXTRA_AUTOPLAY, autoplay);
-            FileOperationsHelper fileOperationsHelper = new FileOperationsHelper(this);
+            FileOperationsHelper fileOperationsHelper = new FileOperationsHelper(this,
+                                                                                 getUserAccountManager(),
+                                                                                 connectivityService);
             fileOperationsHelper.startSyncForFileAndIntent(file, previewIntent);
         }
     }
@@ -2436,7 +2467,9 @@ public class FileDisplayActivity extends HookActivity
             Intent previewIntent = new Intent();
             previewIntent.putExtra(EXTRA_FILE, file);
             previewIntent.putExtra(TEXT_PREVIEW, true);
-            FileOperationsHelper fileOperationsHelper = new FileOperationsHelper(this);
+            FileOperationsHelper fileOperationsHelper = new FileOperationsHelper(this,
+                                                                                 getUserAccountManager(),
+                                                                                 connectivityService);
             fileOperationsHelper.startSyncForFileAndIntent(file, previewIntent);
         }
     }
@@ -2566,9 +2599,9 @@ public class FileDisplayActivity extends HookActivity
     @Subscribe(threadMode = ThreadMode.BACKGROUND)
     public void onMessageEvent(TokenPushEvent event) {
         if (!preferences.isKeysReInitEnabled()) {
-            PushUtils.reinitKeys();
+            PushUtils.reinitKeys(getUserAccountManager());
         } else {
-            PushUtils.pushRegistrationToServer(preferences.getPushToken());
+            PushUtils.pushRegistrationToServer(getUserAccountManager(), preferences.getPushToken());
         }
     }
 
@@ -2591,4 +2624,44 @@ public class FileDisplayActivity extends HookActivity
         searchQuery = query;
     }
 
+    private void handleOpenFileViaIntent(Intent intent) {
+        showLoadingDialog(getString(R.string.retrieving_file));
+
+        String accountName = intent.getStringExtra("KEY_ACCOUNT");
+
+        Account newAccount;
+        if (accountName == null) {
+            newAccount = getAccount();
+        } else {
+            newAccount = getUserAccountManager().getAccountByName(accountName);
+
+            if (newAccount == null) {
+                dismissLoadingDialog();
+                DisplayUtils.showSnackMessage(this, getString(R.string.associated_account_not_found));
+                return;
+            }
+
+            setAccount(newAccount);
+        }
+
+        String fileId = String.valueOf(intent.getStringExtra(KEY_FILE_ID));
+
+        if ("null".equals(fileId)) {
+            dismissLoadingDialog();
+            DisplayUtils.showSnackMessage(this, getString(R.string.error_retrieving_file));
+            return;
+        }
+
+        FileDataStorageManager storageManager = getStorageManager();
+
+        if (storageManager == null) {
+            storageManager = new FileDataStorageManager(newAccount, getContentResolver());
+        }
+
+        FetchRemoteFileTask fetchRemoteFileTask = new FetchRemoteFileTask(newAccount,
+                                                                          fileId,
+                                                                          storageManager,
+                                                                          this);
+        fetchRemoteFileTask.execute();
+    }
 }

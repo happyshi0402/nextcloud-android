@@ -74,6 +74,16 @@
 
     <uses-sdk tools:overrideLibrary="com.blikoon.qrcodescanner" />
 
+    <!-- Some Chromebooks don't support touch. Although not essential,
+         it's a good idea to explicitly include this declaration. -->
+    <uses-feature
+        android:name="android.hardware.touchscreen"
+        android:required="false" />
+
+    <uses-feature
+        android:name="android.hardware.camera"
+        android:required="false" />
+
     <application
         android:name=".MainApp"
         android:icon="@mipmap/ic_launcher"
@@ -85,6 +95,7 @@
         android:supportsRtl="true"
         android:installLocation="internalOnly"
         android:manageSpaceActivity="com.owncloud.android.ui.activity.ManageSpaceActivity"
+        android:usesCleartextTraffic="true"
         tools:ignore="UnusedAttribute">
 
         <uses-library
@@ -256,6 +267,8 @@
         <provider
             android:name=".providers.DiskLruImageCacheFileProvider"
             android:authorities="@string/image_cache_provider_authority"
+            android:grantUriPermissions="true"
+            android:readPermission="android.permission.MANAGE_DOCUMENTS"
             android:exported="true">
         </provider>
 
@@ -265,14 +278,6 @@
             android:launchMode="singleTask"
             android:configChanges="orientation|screenSize|keyboardHidden"
             android:theme="@style/Theme.ownCloud.noActionBar.Login">
-            <intent-filter>
-                <action android:name="android.intent.action.VIEW" />
-
-                <category android:name="android.intent.category.DEFAULT" />
-                <category android:name="android.intent.category.BROWSABLE" />
-
-                <data android:scheme="@string/oauth2_redirect_scheme" />
-            </intent-filter>
             <intent-filter>
                 <action android:name="com.owncloud.android.workaround.accounts.CREATE" />
 
@@ -304,7 +309,9 @@
         <service android:name=".files.services.FileUploader" />
         <service android:name=".media.MediaService" />
 
-        <activity android:name=".ui.activity.PassCodeActivity" />
+        <activity
+            android:name=".ui.activity.PassCodeActivity"
+            android:launchMode="singleTask" />
         <activity
             android:name=".ui.activity.RequestCredentialsActivity"
             android:launchMode="singleTask" />
@@ -318,10 +325,10 @@
         <activity
             android:name=".ui.trashbin.TrashbinActivity"
             android:configChanges="orientation|screenSize|keyboardHidden"/>
-        <activity android:name=".ui.activity.WhatsNewActivity"
+        <activity android:name="com.nextcloud.client.onboarding.WhatsNewActivity"
                   android:theme="@style/Theme.ownCloud.noActionBar.Login" />
         <activity
-            android:name=".ui.activity.FirstRunActivity"
+            android:name="com.nextcloud.client.onboarding.FirstRunActivity"
             android:theme="@style/Theme.ownCloud.noActionBar.Login"
             android:configChanges="orientation|screenSize"/>
 
@@ -337,7 +344,7 @@
 
         <activity
             android:name=".ui.activity.CopyToClipboardActivity"
-            android:icon="@drawable/copy_link"
+            android:icon="@drawable/shared_via_link"
             android:label="@string/copy_link" />
         <activity
             android:name=".ui.activity.FolderPickerActivity"

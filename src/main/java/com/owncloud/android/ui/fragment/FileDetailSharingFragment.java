@@ -21,9 +21,11 @@
 package com.owncloud.android.ui.fragment;
 
 import android.accounts.Account;
+import android.accounts.AccountManager;
 import android.app.SearchManager;
 import android.content.Context;
 import android.content.res.Resources;
+import android.graphics.PorterDuff;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.text.TextUtils;
@@ -38,10 +40,12 @@ import android.widget.PopupMenu;
 import android.widget.TextView;
 
 import com.google.android.material.snackbar.Snackbar;
+import com.nextcloud.client.account.UserAccountManager;
+import com.nextcloud.client.di.Injectable;
 import com.owncloud.android.R;
-import com.owncloud.android.authentication.AccountUtils;
 import com.owncloud.android.datamodel.FileDataStorageManager;
 import com.owncloud.android.datamodel.OCFile;
+import com.owncloud.android.lib.common.OwnCloudAccount;
 import com.owncloud.android.lib.common.operations.RemoteOperationResult;
 import com.owncloud.android.lib.resources.shares.OCShare;
 import com.owncloud.android.lib.resources.shares.SharePermissionsBuilder;
@@ -63,6 +67,8 @@ import com.owncloud.android.utils.ThemeUtils;
 
 import java.util.List;
 
+import javax.inject.Inject;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.widget.AppCompatCheckBox;
@@ -76,7 +82,7 @@ import butterknife.OnClick;
 import butterknife.Unbinder;
 
 public class FileDetailSharingFragment extends Fragment implements UserListAdapter.ShareeListAdapterListener,
-    DisplayUtils.AvatarGenerationListener {
+    DisplayUtils.AvatarGenerationListener, Injectable {
 
     private static final String ARG_FILE = "FILE";
     private static final String ARG_ACCOUNT = "ACCOUNT";
@@ -130,6 +136,11 @@ public class FileDetailSharingFragment extends Fragment implements UserListAdapt
 
     @BindView(R.id.shared_with_you_note)
     TextView sharedWithYouNote;
+
+    @BindView(R.id.copy_internal_link_icon)
+    ImageView internalLinkIcon;
+
+    @Inject UserAccountManager accountManager;
 
     public static FileDetailSharingFragment newInstance(OCFile file, Account account) {
         FileDetailSharingFragment fragment = new FileDetailSharingFragment();
@@ -193,6 +204,14 @@ public class FileDetailSharingFragment extends Fragment implements UserListAdapt
 
         setupView();
 
+        // todo extract
+        internalLinkIcon.getBackground().setColorFilter(getResources().getColor(R.color.grey_db),
+                                                        PorterDuff.Mode.SRC_IN);
+        internalLinkIcon.getDrawable().mutate().setColorFilter(getResources().getColor(R.color.black),
+                                                               PorterDuff.Mode.SRC_IN);
+
+
+
         return view;
     }
 
@@ -222,6 +241,7 @@ public class FileDetailSharingFragment extends Fragment implements UserListAdapt
             ThemeUtils.themeSearchView(getContext(), searchView, false);
         } else {
             searchView.setVisibility(View.GONE);
+            shareByLinkContainer.setVisibility(View.GONE);
             noList.setText(R.string.reshare_not_allowed);
         }
     }
@@ -246,11 +266,7 @@ public class FileDetailSharingFragment extends Fragment implements UserListAdapt
 
     private void setLinkDetailVisible(boolean visible) {
         if (visible) {
-            if (file.isFolder()) {
                 shareByLinkAllowEditing.setVisibility(View.VISIBLE);
-            } else {
-                shareByLinkAllowEditing.setVisibility(View.INVISIBLE);
-            }
             overflowMenuShareLink.setVisibility(View.VISIBLE);
         } else {
             shareByLinkAllowEditing.setVisibility(View.INVISIBLE);
@@ -270,7 +286,7 @@ public class FileDetailSharingFragment extends Fragment implements UserListAdapt
     }
 
     private void setShareWithYou() {
-        if (AccountUtils.accountOwnsFile(file, account)) {
+        if (accountManager.accountOwnsFile(file, account)) {
             sharedWithYouContainer.setVisibility(View.GONE);
         } else {
             sharedWithYouUsername.setText(
@@ -283,7 +299,7 @@ public class FileDetailSharingFragment extends Fragment implements UserListAdapt
 
             String note = file.getNote();
 
-            if (!note.isEmpty()) {
+            if (!TextUtils.isEmpty(note)) {
                 sharedWithYouNote.setText(file.getNote());
                 sharedWithYouNote.setVisibility(View.VISIBLE);
             } else {
@@ -296,9 +312,13 @@ public class FileDetailSharingFragment extends Fragment implements UserListAdapt
         // TODO Refactoring: create a new {@link ShareUserListAdapter} instance with every call should not be needed
 
         if (shares.size() > 0) {
+            AccountManager accountManager = AccountManager.get(getContext());
+            String userId = accountManager.getUserData(account,
+                com.owncloud.android.lib.common.accounts.AccountUtils.Constants.KEY_USER_ID);
+
             usersList.setVisibility(View.VISIBLE);
-            usersList.setAdapter(new UserListAdapter(fileDisplayActivity.getSupportFragmentManager(), fileDisplayActivity, shares,
-                account, file, this));
+            usersList.setAdapter(new UserListAdapter(fileDisplayActivity.getSupportFragmentManager(),
+                fileDisplayActivity, shares, account, file, this, userId));
             usersList.setLayoutManager(new LinearLayoutManager(getContext()));
             usersList.addItemDecoration(new SimpleListItemDividerDecoration(getContext()));
             noList.setVisibility(View.GONE);
@@ -317,11 +337,28 @@ public class FileDetailSharingFragment extends Fragment implements UserListAdapt
         }
     }
 
+    @OnClick(R.id.copy_internal_container)
+    public void copyInternalLink() {
+        OwnCloudAccount account = accountManager.getCurrentOwnCloudAccount();
+
+        if (account == null) {
+            DisplayUtils.showSnackMessage(getView(), getString(R.string.could_not_retrieve_url));
+            return;
+        }
+
+        FileDisplayActivity.showShareLinkDialog(fileDisplayActivity, file, createInternalLink(account, file));
+    }
+
+    private String createInternalLink(OwnCloudAccount account, OCFile file) {
+        return account.getBaseUri() + "/index.php/f/" + file.getLocalId();
+    }
+
     private void createShareLink() {
-        if (capabilities != null &&
-                capabilities.getFilesSharingPublicPasswordEnforced().isTrue()) {
+        if (capabilities != null && (capabilities.getFilesSharingPublicPasswordEnforced().isTrue() ||
+            capabilities.getFilesSharingPublicAskForOptionalPassword().isTrue())) {
             // password enforced by server, request to the user before trying to create
-            requestPasswordForShareViaLink(true);
+            requestPasswordForShareViaLink(true,
+                                           capabilities.getFilesSharingPublicAskForOptionalPassword().isTrue());
 
         } else {
             // create without password if not enforced by server or we don't know if enforced;
@@ -334,7 +371,7 @@ public class FileDetailSharingFragment extends Fragment implements UserListAdapt
             if (TextUtils.isEmpty(file.getPublicLink())) {
                 fileOperationsHelper.getFileWithLink(file);
             } else {
-                FileDisplayActivity.showShareLinkDialog(fileDisplayActivity, file.getPublicLink());
+                FileDisplayActivity.showShareLinkDialog(fileDisplayActivity, file, file.getPublicLink());
             }
         }
     }
@@ -415,7 +452,8 @@ public class FileDetailSharingFragment extends Fragment implements UserListAdapt
 
                 return true;
             case R.id.action_password: {
-                requestPasswordForShareViaLink(false);
+                requestPasswordForShareViaLink(false,
+                                               capabilities.getFilesSharingPublicAskForOptionalPassword().isTrue());
                 return true;
             }
             case R.id.action_share_expiration_date: {
@@ -428,7 +466,7 @@ public class FileDetailSharingFragment extends Fragment implements UserListAdapt
             }
             case R.id.action_share_send_link: {
                 if(shareByLink.isChecked() && file.isSharedViaLink() && !TextUtils.isEmpty(file.getPublicLink())) {
-                    FileDisplayActivity.showShareLinkDialog(fileDisplayActivity, file.getPublicLink());
+                    FileDisplayActivity.showShareLinkDialog(fileDisplayActivity, file, file.getPublicLink());
                 } else {
                     showSendLinkTo();
                 }
@@ -525,12 +563,14 @@ public class FileDetailSharingFragment extends Fragment implements UserListAdapt
     /**
      * Starts a dialog that requests a password to the user to protect a share link.
      *
-     * @param createShare When 'true', the request for password will be followed by the creation of a new
-     *                    public link; when 'false', a public share is assumed to exist, and the password
-     *                    is bound to it.
+     * @param createShare    When 'true', the request for password will be followed by the creation of a new public
+     *                       link; when 'false', a public share is assumed to exist, and the password is bound to it.
+     * @param askForPassword if true, password is optional
      */
-    public void requestPasswordForShareViaLink(boolean createShare) {
-        SharePasswordDialogFragment dialog = SharePasswordDialogFragment.newInstance(file, createShare);
+    public void requestPasswordForShareViaLink(boolean createShare, boolean askForPassword) {
+        SharePasswordDialogFragment dialog = SharePasswordDialogFragment.newInstance(file,
+                                                                                     createShare,
+                                                                                     askForPassword);
         dialog.show(getChildFragmentManager(), SharePasswordDialogFragment.PASSWORD_FRAGMENT);
     }
 

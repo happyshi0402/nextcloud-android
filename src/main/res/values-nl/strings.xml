@@ -3,15 +3,13 @@
     <string name="about_android">%1$s Android app</string>
     <string name="about_title">Over</string>
     <string name="about_version">versie %1$s</string>
+    <string name="about_version_with_build">versie %1$s, build #%2$s</string>
     <string name="account_creation_failed">Account aanmaken mislukt</string>
     <string name="account_icon">Accountpictogram</string>
     <string name="account_not_found">Account niet gevonden!</string>
     <string name="action_clear_failed_uploads">Wis mislukte uploads</string>
-    <string name="action_clear_successful_uploads">Wis gelukte uploads</string>
     <string name="action_empty_notifications">Handel alle meldingen af</string>
     <string name="action_empty_trashbin">Legen prullebak</string>
-    <string name="action_force_rescan">Indexering forceren</string>
-    <string name="action_retry_uploads">Probeer mislukte uploads opnieuw</string>
     <string name="action_send_share">Versturen/Delen</string>
     <string name="action_switch_grid_view">Rasterindeling </string>
     <string name="action_switch_list_view">Lijstindeling</string>
@@ -22,6 +20,7 @@
     <string name="actionbar_mkdir">Nieuwe map</string>
     <string name="actionbar_move">Verplaatsen</string>
     <string name="actionbar_open_as_richdocument">Openen met Collabora</string>
+    <string name="actionbar_open_as_richdocument_parameter">Openen met %1$s</string>
     <string name="actionbar_open_with">Openen met</string>
     <string name="actionbar_search">Zoeken</string>
     <string name="actionbar_see_details">Details</string>
@@ -36,6 +35,7 @@
     <string name="activity_chooser_title">Verstuur link naar…</string>
     <string name="activity_icon">Activiteit</string>
     <string name="add_to_cloud">Voeg toe aan %1$s</string>
+    <string name="associated_account_not_found">Geassocieerd account niet gevonden!</string>
     <string name="auth_access_failed">Toegang mislukt: %1$s</string>
     <string name="auth_account_does_not_exist">Account bestaat nog niet op dit apparaat</string>
     <string name="auth_account_not_new">Er bestaat al een account voor deze gebruiker en server op dit apparaat</string>
@@ -84,6 +84,7 @@
     <string name="auto_upload_path">/AutomatischUploaden</string>
     <string name="autoupload_create_new_custom_folder">Maak aangepaste nieuwe map aan</string>
     <string name="autoupload_custom_folder">Instellen aangepaste map</string>
+    <string name="autoupload_disable_power_save_check">Uitschakelen stroombesparingscontrole</string>
     <string name="avatar">Avatar</string>
     <string name="battery_optimization_close">Sluiten</string>
     <string name="battery_optimization_disable">Uitschakelen</string>
@@ -147,9 +148,12 @@
     <string name="copy_file_invalid_into_descendent">Een map kan niet naar een onderliggende map worden gekopieerd</string>
     <string name="copy_file_invalid_overwrite">Het bestand bestaat al in de doelmap</string>
     <string name="copy_file_not_found">Kan niet kopiëren. Ga na of het bestand wel bestaat</string>
+    <string name="copy_internal_link">Kopieer interne link</string>
+    <string name="copy_internal_link_subline">Werkt alleen voor gebruikers met toegang tot deze map</string>
     <string name="copy_link">Link kopiëren</string>
     <string name="copy_move_to_encrypted_folder_not_supported">Kopieren/verplaatsen naar een versleutelde map is momenteel niet mogelijk.</string>
     <string name="copy_to">Kopieer naar…</string>
+    <string name="could_not_retrieve_url">Kon url niet ophalen</string>
     <string name="create_dir_fail_msg">Kan map niet aanmaken</string>
     <string name="create_file_from_template">Creëren bestand vanaf sjabloon…</string>
     <string name="create_new_document">Creëer nieuw document</string>
@@ -227,9 +231,11 @@
     <string name="error__upload__local_file_not_copied">%1$s kon niet worden gekopieerd naar de lokale map %2$s</string>
     <string name="error_cant_bind_to_operations_service">Kritieke fout: kan de acties niet uitvoeren</string>
     <string name="error_comment_file">Fout bij plaatsen commentaar</string>
+    <string name="error_retrieving_file">Fout bij ophalen van bestand</string>
     <string name="error_retrieving_templates">Fout bij ophalen sjablonen</string>
     <string name="error_starting_direct_camera_upload">Fout bij starten camera</string>
     <string name="fab_label">Toevoegen of uploaden</string>
+    <string name="failed_to_download">Kon het bestand niet doorgeven aan de download beheerder</string>
     <string name="fallback_weblogin_back">Terug</string>
     <string name="fallback_weblogin_text">Terug naar vorige login-methode</string>
     <string name="favorite">Toevoegen aan favorieten</string>
@@ -450,6 +456,8 @@
     <string name="placeholder_media_time">12:23:45</string>
     <string name="placeholder_sentence">Dit is een plaatshouder</string>
     <string name="placeholder_timestamp">2012/05/18 12:23</string>
+    <string name="power_check_dialog_title">Uitschakelen stroombesparingscontrole</string>
+    <string name="power_save_check_dialog_message">Uitschakelen stroombesparingscontrole kan resulteren in uploaden van bestanden met lage accustand!</string>
     <string name="pref_behaviour_entries_delete_file">verwijderd worden</string>
     <string name="pref_behaviour_entries_keep_file">bewaard worden in originele map</string>
     <string name="pref_behaviour_entries_move">verplaatst worden naar app-map</string>
@@ -517,6 +525,7 @@
     <string name="resized_image_not_possible_download">Geen verkleinde afbeelding beschikbaar. Volledige afbeelding downloaden?</string>
     <string name="restore">Herstellen bestand</string>
     <string name="restore_button_description">Herstel verwijderd bestand</string>
+    <string name="retrieving_file">Bestand ophalen…</string>
     <string name="richdocuments_failed_to_load_document">Kon document niet laden!</string>
     <string name="saml_authentication_required_text">Wachtwoord vereist</string>
     <string name="saml_authentication_wrong_pass">Onjuist wachtwoord</string>
@@ -549,6 +558,7 @@
     <string name="share_link_file_error">Er trad een fout op bij je poging dit bestand of deze map te delen</string>
     <string name="share_link_file_no_exist">Kan dit niet delen. Controleer of dit bestand wel bestaat</string>
     <string name="share_link_forbidden_permissions">om dit bestand te delen</string>
+    <string name="share_link_optional_password_title">Geef een niet verplicht wachtwoord in</string>
     <string name="share_link_password_title">Vul het wachtwoord in</string>
     <string name="share_no_expiration_date_label">Stel vervaldatum in</string>
     <string name="share_no_password_title">Instellen wachtwoord</string>
@@ -626,10 +636,10 @@
     <string name="storage_movies">Films</string>
     <string name="storage_music">Muziek</string>
     <string name="storage_pictures">Afbeeldingen</string>
-    <string name="store_full_desc">De Open Source Nextcloud Android app geeft je mobiele vrijheid.\n\nFuncties:\n* Simpel &amp; modern uiterlijk, helemaal in dezelfde stijl als jouw server\n* Upload bestanden naar je Nextcloud server\n* Deel bestanden met anderen\n* Hou je favoriete bestanden en mappen gesynchroniseerd\n* Zoek in al je bestanden op de server\n* Automatisch uploaden voor al je foto\'s en video\'s\n* Blijf op de hoogte met notificaties\n* Ondersteuning voor meerdere accounts en servers\n* Beveilig toegang tot je gegevens met vingerafdruk of pincode\n* Integratie met DAVx5 (vroeger bekend als DAVdroid) voor makkelijk synchroniseren van je kalender &amp; contacten\n\nMeld alsjeblieft alle bugs en problemen op https://github.com/nextcloud/android/issues en doe je zegje over deze app in ons forum https://help.nextcloud.com/c/clients/android\n\nNieuw bij Nextcloud? Nextcloud is een privé bestanden- en communicatieserver. Het is volledig open source en je kunt het zelf hosten of een bedrijf betalen om dat voor je te doen. Zo heb je volledige controle over je foto\'s, kalender, adresboek, document en al het andere.\n\nCheck Nextcloud op https://nextcloud.com</string>
-    <string name="store_full_dev_desc">De Open Source Nextcloud Android app geeft je mobiele vrijheid.\nDit is de officiële ontwikkelversie die gloednieuwe, ongeteste mogelijkheden heeft, die tot instabiliteit en gegevensverlies zouden kunnen leiden. De app is voor gebruikers die de nieuwe functies willen testen en eventuele bugs willen melden. Gebruik de app niet voor productiewerkzaamheden!\n\nZowel de ontwikkelversie als de reguliere versie zijn beschikbaar is in F-Droid en ze kunnen naast elkaar gebruikt worden.</string>
-    <string name="store_short_desc">De Nextcloud Android app geeft je toegang tot al je Nextcloud bestanden.</string>
-    <string name="store_short_dev_desc">De Nextcloud Dev app is een ontwikkelversie. Kan parallel worden geïnstalleerd.</string>
+    <string name="store_full_desc">Het eigen-hosting productiviteitsplatform waarmee je zelf in control bent.\n\nFuncties:\n* Eenvoudige, moderne interface, passend bij het thema van jouw server\n* Upload bestanden naar je Nextcloud server\n* Deel ze met anderen\n* Hou je favoriete bestanden en mappen gesynchroniseerd\n* Zoek in alle mappen op je server\n* Auto Upload voor foto\'s en video\'s op je toestel\n* Blijf bij met meldingen\n* Multi-account ondersteuning\n* veilige toegang tot je gegevens door vingerafdruk of  PIN\n* Integratie met DAVx5 (vroeger bekend als DAVdroid) vooreenvoudig instellen van je agenda&amp; Contactpersonensynchronisatie\n\nMeld alle problemen op https://github.com/nextcloud/android/issues en bespreek deze app op https://help.nextcloud.com/c/clients/android\n\nNieuw bij Nextcloud? Nextcloud is een persoonlijk bestandensync- &amp; -deel en communicatieserver. het is vrije software, die je zelf kunt draaien of bij een betaalde provider. Hierdoor ben je zelf in control van jouw foto\'s, jouw agenda en contactgegevens, jouw documenten en al het andere.\n\nBekijk Nextcloud op https://nextcloud.com</string>
+    <string name="store_full_dev_desc">Het eigen-hosting productiviteitsplatform waarmee je zelf in control bent.\nDit is de officiële ontwikkelversie die gloednieuwe, ongeteste mogelijkheden heeft, die tot instabiliteit en gegevensverlies zouden kunnen leiden. De app is voor gebruikers die de nieuwe functies willen testen en eventuele bugs willen melden. Gebruik de app niet voor productiewerkzaamheden!\n\nZowel de ontwikkelversie als de reguliere versie zijn beschikbaar is in F-Droid en ze kunnen naast elkaar gebruikt worden.</string>
+    <string name="store_short_desc">Het eigen-hosting productiviteitsplatform waarmee je zelf in control bent</string>
+    <string name="store_short_dev_desc">Het eigen-hosting productiviteitsplatform waarmee je zelf in control bent (dev preview versie)</string>
     <string name="stream">Streamen met…</string>
     <string name="stream_not_possible_headline">Intern streamen niet mogelijk</string>
     <string name="stream_not_possible_message">Download media in plaats van gebruik externe app.</string>
@@ -724,7 +734,6 @@
     <string name="uploader_upload_in_progress_content">%1$d%% Uploaden van %2$s</string>
     <string name="uploader_upload_in_progress_ticker">Uploaden…</string>
     <string name="uploader_upload_succeeded_content_single">%1$s geüpload</string>
-    <string name="uploader_upload_succeeded_ticker">Geüpload</string>
     <string name="uploader_wrn_no_account_quit_btn_text">Afsluiten</string>
     <string name="uploader_wrn_no_account_setup_btn_text">Configureren</string>
     <string name="uploader_wrn_no_account_text">Er zijn geen %1$s-accounts op dit apparaat. Stel eerst een account in.</string>

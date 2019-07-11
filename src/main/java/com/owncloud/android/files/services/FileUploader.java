@@ -5,9 +5,11 @@
  *  @author masensio
  *  @author LukeOwnCloud
  *  @author David A. Velasco
+ *  @author Chris Narkiewicz
  *
  *  Copyright (C) 2012 Bartek Przybylski
  *  Copyright (C) 2012-2016 ownCloud Inc.
+ *  Copyright (C) 2019 Chris Narkiewicz <hello@ezaquarii.com>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License version 2,
@@ -46,9 +48,11 @@ import android.util.Pair;
 
 import com.evernote.android.job.JobRequest;
 import com.evernote.android.job.util.Device;
+import com.nextcloud.client.account.UserAccountManager;
+import com.nextcloud.client.device.PowerManagementService;
+import com.nextcloud.client.network.ConnectivityService;
 import com.owncloud.android.MainApp;
 import com.owncloud.android.R;
-import com.owncloud.android.authentication.AccountUtils;
 import com.owncloud.android.authentication.AuthenticatorActivity;
 import com.owncloud.android.datamodel.FileDataStorageManager;
 import com.owncloud.android.datamodel.OCFile;
@@ -69,10 +73,10 @@ import com.owncloud.android.operations.UploadFileOperation;
 import com.owncloud.android.ui.activity.FileActivity;
 import com.owncloud.android.ui.activity.UploadListActivity;
 import com.owncloud.android.ui.notifications.NotificationUtils;
-import com.owncloud.android.utils.ConnectivityUtils;
 import com.owncloud.android.utils.ErrorMessageAdapter;
-import com.owncloud.android.utils.PowerUtils;
 import com.owncloud.android.utils.ThemeUtils;
+
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.util.AbstractList;
@@ -82,8 +86,11 @@ import java.util.Map;
 import java.util.Vector;
 
 import javax.annotation.Nullable;
+import javax.inject.Inject;
 
+import androidx.annotation.NonNull;
 import androidx.core.app.NotificationCompat;
+import dagger.android.AndroidInjection;
 
 /**
  * Service for uploading files. Invoke using context.startService(...).
@@ -120,6 +127,8 @@ public class FileUploader extends Service
     public static final String KEY_MIME_TYPE = "MIME_TYPE";
 
     private Notification mNotification;
+
+    @Inject UserAccountManager accountManager;
 
     /**
      * Call this Service with only this Intent key if all pending uploads are to be retried.
@@ -174,7 +183,9 @@ public class FileUploader extends Service
     private Account mCurrentAccount;
     private FileDataStorageManager mStorageManager;
     //since there can be only one instance of an Android service, there also just one db connection.
-    private UploadsStorageManager mUploadsStorageManager;
+    @Inject UploadsStorageManager mUploadsStorageManager;
+    @Inject ConnectivityService connectivityService;
+    @Inject PowerManagementService powerManagementService;
 
     private IndexedForest<UploadFileOperation> mPendingUploads = new IndexedForest<>();
 
@@ -355,14 +366,10 @@ public class FileUploader extends Service
         /**
          * Call to retry upload identified by remotePath
          */
-        public void retry (Context context, OCUpload upload) {
+        public void retry (Context context, UserAccountManager accountManager, OCUpload upload) {
             if (upload != null && context != null) {
-                Account account = AccountUtils.getOwnCloudAccountByName(
-                    context,
-                    upload.getAccountName()
-                );
+                Account account = accountManager.getAccountByName(upload.getAccountName());
                 retry(context, account, upload);
-
             } else {
                 throw new IllegalArgumentException("Null parameter!");
             }
@@ -386,25 +393,32 @@ public class FileUploader extends Service
          * @param uploadResult      If not null, only failed uploads with the result specified will be retried;
          *                          otherwise, failed uploads due to any result will be retried.
          */
-        public void retryFailedUploads(Context context, Account account, UploadResult uploadResult) {
-            UploadsStorageManager uploadsStorageManager = new UploadsStorageManager(context.getContentResolver(), context);
+        public void retryFailedUploads(
+            @NonNull final Context context,
+            @Nullable final Account account,
+            @NotNull final UploadsStorageManager uploadsStorageManager,
+            @NotNull final ConnectivityService connectivityService,
+            @NotNull final UserAccountManager accountManager,
+            @NotNull final PowerManagementService powerManagementService,
+            @Nullable final UploadResult uploadResult
+        ) {
             OCUpload[] failedUploads = uploadsStorageManager.getFailedUploads();
             Account currentAccount = null;
             boolean resultMatch;
             boolean accountMatch;
 
-            boolean gotNetwork = !Device.getNetworkType(context).equals(JobRequest.NetworkType.ANY) &&
-                    !ConnectivityUtils.isInternetWalled(context);
+            boolean gotNetwork = connectivityService.getActiveNetworkType() != JobRequest.NetworkType.ANY &&
+                    !connectivityService.isInternetWalled();
             boolean gotWifi = gotNetwork && Device.getNetworkType(context).equals(JobRequest.NetworkType.UNMETERED);
             boolean charging = Device.getBatteryStatus(context).isCharging();
-            boolean isPowerSaving = PowerUtils.isPowerSaveMode(context);
+            boolean isPowerSaving = powerManagementService.isPowerSavingEnabled();
 
             for ( OCUpload failedUpload: failedUploads) {
                 accountMatch = account == null || account.name.equals(failedUpload.getAccountName());
                 resultMatch = uploadResult == null || uploadResult.equals(failedUpload.getLastResult());
                 if (accountMatch && resultMatch) {
                     if (currentAccount == null || !currentAccount.name.equals(failedUpload.getAccountName())) {
-                        currentAccount = failedUpload.getAccount(context);
+                        currentAccount = failedUpload.getAccount(accountManager);
                     }
 
                     if (!new File(failedUpload.getLocalPath()).exists()) {
@@ -451,6 +465,7 @@ public class FileUploader extends Service
     @Override
     public void onCreate() {
         super.onCreate();
+        AndroidInjection.inject(this);
         Log_OC.d(TAG, "Creating service");
         mNotificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
         HandlerThread thread = new HandlerThread("FileUploaderThread",
@@ -459,8 +474,6 @@ public class FileUploader extends Service
         mServiceLooper = thread.getLooper();
         mServiceHandler = new ServiceHandler(mServiceLooper, this);
         mBinder = new FileUploaderBinder();
-
-        mUploadsStorageManager = new UploadsStorageManager(getContentResolver(), getApplicationContext());
 
         NotificationCompat.Builder builder = new NotificationCompat.Builder(this).setContentTitle(
                 getApplicationContext().getResources().getString(R.string.app_name))
@@ -538,7 +551,7 @@ public class FileUploader extends Service
         }
 
         Account account = intent.getParcelableExtra(KEY_ACCOUNT);
-        if (!AccountUtils.exists(account, getApplicationContext())) {
+        if (!accountManager.exists(account)) {
             return Service.START_NOT_STICKY;
         }
 
@@ -627,6 +640,9 @@ public class FileUploader extends Service
 
 
                     newUpload = new UploadFileOperation(
+                        mUploadsStorageManager,
+                            connectivityService,
+                            powerManagementService,
                             account,
                             file,
                             ocUpload,
@@ -685,6 +701,9 @@ public class FileUploader extends Service
             whileChargingOnly = upload.isWhileChargingOnly();
 
             UploadFileOperation newUpload = new UploadFileOperation(
+                    mUploadsStorageManager,
+                    connectivityService,
+                    powerManagementService,
                     account,
                     null,
                     upload,
@@ -750,8 +769,7 @@ public class FileUploader extends Service
     @Override
     public void onAccountsUpdated(Account[] accounts) {
         // Review current upload, and cancel it if its account doen't exist
-        if (mCurrentUpload != null &&
-                !AccountUtils.exists(mCurrentUpload.getAccount(), getApplicationContext())) {
+        if (mCurrentUpload != null && !accountManager.exists(mCurrentUpload.getAccount())) {
             mCurrentUpload.cancel();
         }
         // The rest of uploads are cancelled when they try to start
@@ -971,7 +989,7 @@ public class FileUploader extends Service
                         cancel(mCurrentUpload.getAccount().name, mCurrentUpload.getFile().getRemotePath()
                                 , ResultCode.DELAYED_FOR_CHARGING);
                     } else if (!mCurrentUpload.isIgnoringPowerSaveMode() &&
-                            PowerUtils.isPowerSaveMode(MainApp.getAppContext())) {
+                            powerManagementService.isPowerSavingEnabled()) {
                         cancel(mCurrentUpload.getAccount().name, mCurrentUpload.getFile().getRemotePath()
                                 , ResultCode.DELAYED_IN_POWER_SAVE_MODE);
                     }
@@ -1045,7 +1063,7 @@ public class FileUploader extends Service
         if (mCurrentUpload != null) {
 
             /// Check account existence
-            if (!AccountUtils.exists(mCurrentUpload.getAccount(), this)) {
+            if (!accountManager.exists(mCurrentUpload.getAccount())) {
                 Log_OC.w(TAG, "Account " + mCurrentUpload.getAccount().name +
                         " does not exist anymore -> cancelling all its uploads");
                 cancelUploadsForAccount(mCurrentUpload.getAccount());
